@@ -105,6 +105,7 @@
 	$apps[$x]['menu'][$y]['path'] = "/app/edit/index.php?dir=php";
 	$apps[$x]['menu'][$y]['groups'][] = "superadmin";
 	$y++;
+	/*
 	$apps[$x]['menu'][$y]['title']['en-us'] = "Grammar Editor";
 	$apps[$x]['menu'][$y]['title']['ar-eg'] = "";
 	$apps[$x]['menu'][$y]['title']['de-at'] = "Grammatik Editor";
@@ -130,5 +131,6 @@
 	$apps[$x]['menu'][$y]['icon'] = "external-link-alt";
 	$apps[$x]['menu'][$y]['path'] = "/app/edit/index.php?dir=grammar";
 	$apps[$x]['menu'][$y]['groups'][] = "superadmin";
+	*/
 
 ?>
