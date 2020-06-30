@@ -5,7 +5,7 @@
 		$apps[$x]['uuid'] = "17e628ee-ccfa-49c0-29ca-9894a0384b9b";
 		$apps[$x]['category'] = "Switch";
 		$apps[$x]['subcategory'] = "";
-		$apps[$x]['version'] = "1.0";
+		$apps[$x]['version'] = "2.1";
 		$apps[$x]['license'] = "Mozilla Public License 1.1";
 		$apps[$x]['url'] = "http://www.fusionpbx.com";
 		$apps[$x]['description']['en-us'] = "Script Editor can be used to edit lua, javascript or other scripts.";
