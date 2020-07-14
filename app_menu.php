@@ -105,32 +105,5 @@
 	$apps[$x]['menu'][$y]['path'] = "/app/edit/index.php?dir=php";
 	$apps[$x]['menu'][$y]['groups'][] = "superadmin";
 	$y++;
-	/*
-	$apps[$x]['menu'][$y]['title']['en-us'] = "Grammar Editor";
-	$apps[$x]['menu'][$y]['title']['ar-eg'] = "";
-	$apps[$x]['menu'][$y]['title']['de-at'] = "Grammatik Editor";
-	$apps[$x]['menu'][$y]['title']['de-ch'] = "";
-	$apps[$x]['menu'][$y]['title']['de-de'] = "Grammatik Editor";
-	$apps[$x]['menu'][$y]['title']['es-cl'] = "Editor Gramático";
-	$apps[$x]['menu'][$y]['title']['es-mx'] = "Editor Gramático";
-	$apps[$x]['menu'][$y]['title']['fr-ca'] = "";
-	$apps[$x]['menu'][$y]['title']['fr-fr'] = "Editeur de Grammaire";
-	$apps[$x]['menu'][$y]['title']['he-il'] = "";
-	$apps[$x]['menu'][$y]['title']['it-it'] = "Editor Grammatica";
-	$apps[$x]['menu'][$y]['title']['nl-nl'] = "Grammatica bewerker";
-	$apps[$x]['menu'][$y]['title']['pl-pl'] = "";
-	$apps[$x]['menu'][$y]['title']['pt-br'] = "";
-	$apps[$x]['menu'][$y]['title']['pt-pt'] = "Editor Gramático";
-	$apps[$x]['menu'][$y]['title']['ro-ro'] = "";
-	$apps[$x]['menu'][$y]['title']['ru-ru'] = "Редактор грамматики";
-	$apps[$x]['menu'][$y]['title']['sv-se'] = "";
-	$apps[$x]['menu'][$y]['title']['uk-ua'] = "";
-	$apps[$x]['menu'][$y]['uuid'] = "c3db739e-89f9-0fa2-44ce-0f4c2ff43b1a";
-	$apps[$x]['menu'][$y]['parent_uuid'] = "594d99c5-6128-9c88-ca35-4b33392cec0f";
-	$apps[$x]['menu'][$y]['category'] = "external";
-	$apps[$x]['menu'][$y]['icon'] = "external-link-alt";
-	$apps[$x]['menu'][$y]['path'] = "/app/edit/index.php?dir=grammar";
-	$apps[$x]['menu'][$y]['groups'][] = "superadmin";
-	*/
 
 ?>
