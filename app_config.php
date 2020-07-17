@@ -8,7 +8,7 @@
 		$apps[$x]['version'] = "2.1";
 		$apps[$x]['license'] = "Mozilla Public License 1.1";
 		$apps[$x]['url'] = "http://www.fusionpbx.com";
-		$apps[$x]['description']['en-us'] = "Script Editor can be used to edit lua, javascript or other scripts.";
+		$apps[$x]['description']['en-us'] = "The edit tool is a browser based editor. Used to edit XML, provision, and script files.";
 		$apps[$x]['description']['ar-eg'] = "";
 		$apps[$x]['description']['de-at'] = "Der Skript-Editor kann verwendet werden um Lua, Javaskripte oder andere Skripte zu bearbeiten.";
 		$apps[$x]['description']['de-ch'] = "";
