@@ -128,7 +128,7 @@
 						if (!$handle) {
 							throw new Exception('Write Failed - Check File Owner & Permissions');
 						}
-						fwrite($handle, $_POST["content"]);
+						fwrite($handle, str_replace ("\r\n", "\n", $_POST["content"]));
 						fclose($handle);
 					}
 
