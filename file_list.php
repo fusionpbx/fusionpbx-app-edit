@@ -42,15 +42,15 @@
 //add css and javascript
 	require_once "header.php";
 
-//define function recure_dir
+//define function recur_dir
 	function recur_dir($dir) {
 		clearstatcache();
 		$html_dir_list = '';
 		$html_file_list = '';
-		$dir_list = opendir($dir);
+		$dir_handle = opendir($dir);
 		$dir_array = array();
-		if (is_array($dir_list)) {
-			while (false !== ($file = readdir($dir_list))) {
+		if (($dir_handle)) {
+			while (false !== ($file = readdir($dir_handle))) {
 				if ($file != "." AND $file != "..") {
 					$newpath = $dir.'/'.$file;
 					$level = explode('/',$newpath);
@@ -98,7 +98,7 @@
 			}
 		}
 
-		closedir($dir_list);
+		closedir($dir_handle);
 		return $html_dir_list ."\n". $html_file_list;
 	}
 
