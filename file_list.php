@@ -45,31 +45,33 @@
 //define function recure_dir
 	function recur_dir($dir) {
 		clearstatcache();
-		$htmldirlist = '';
-		$htmlfilelist = '';
-		$dirlist = opendir($dir);
+		$html_dir_list = '';
+		$html_file_list = '';
+		$dir_list = opendir($dir);
 		$dir_array = array();
-		if($dirlist !== false) while (false !== ($file = readdir($dirlist))) {
-			if ($file != "." AND $file != ".."){
-				$newpath = $dir.'/'.$file;
-				$level = explode('/',$newpath);
-				if (
-					substr(strtolower($newpath), -4) == ".svn" ||
-					substr(strtolower($newpath), -4) == ".git" ||
-					substr(strtolower($newpath), -3) == ".db" ||
-					substr(strtolower($newpath), -4) == ".jpg" ||
-					substr(strtolower($newpath), -4) == ".gif" ||
-					substr(strtolower($newpath), -4) == ".png" ||
-					substr(strtolower($newpath), -4) == ".ico" ||
-					substr(strtolower($newpath), -4) == ".ttf"
-					) {
-					//ignore certain files (and folders)
+		if (is_array($dir_list)) {
+			while (false !== ($file = readdir($dir_list))) {
+				if ($file != "." AND $file != "..") {
+					$newpath = $dir.'/'.$file;
+					$level = explode('/',$newpath);
+					if (
+						substr(strtolower($newpath), -4) == ".svn" ||
+						substr(strtolower($newpath), -4) == ".git" ||
+						substr(strtolower($newpath), -3) == ".db" ||
+						substr(strtolower($newpath), -4) == ".jpg" ||
+						substr(strtolower($newpath), -4) == ".gif" ||
+						substr(strtolower($newpath), -4) == ".png" ||
+						substr(strtolower($newpath), -4) == ".ico" ||
+						substr(strtolower($newpath), -4) == ".ttf"
+						) {
+						//ignore certain files (and folders)
+					}
+					else {
+						$dir_array[] = $newpath;
+					}
+					if ($x > 1000) { break; };
+					$x++;
 				}
-				else {
-					$dir_array[] = $newpath;
-				}
-				if ($x > 1000) { break; };
-				$x++;
 			}
 		}
 
@@ -79,25 +81,25 @@
 
 			if (is_dir($newpath)) {
 				$dirname = end($level);
-				$htmldirlist .= "<div style='white-space: nowrap; padding-left: 16px;'>\n";
-				$htmldirlist .= "<a onclick='Toggle(this);' style='display: block; cursor: pointer;'><img src='resources/images/icon_folder.png' border='0' align='absmiddle' style='margin: 1px 2px 3px 0px;'>".$dirname."</a>";
-				$htmldirlist .= "<div style='display: none;'>".recur_dir($newpath)."</div>\n";
-				$htmldirlist .= "</div>\n";
+				$html_dir_list .= "<div style='white-space: nowrap; padding-left: 16px;'>\n";
+				$html_dir_list .= "<a onclick='Toggle(this);' style='display: block; cursor: pointer;'><img src='resources/images/icon_folder.png' border='0' align='absmiddle' style='margin: 1px 2px 3px 0px;'>".$dirname."</a>";
+				$html_dir_list .= "<div style='display: none;'>".recur_dir($newpath)."</div>\n";
+				$html_dir_list .= "</div>\n";
 			}
 			else {
 				$filename = end($level);
 				$filesize = round(filesize($newpath)/1024, 2);
 				$newpath = str_replace ('//', '/', $newpath);
 				$newpath = str_replace ("\\", "/", $newpath);
-				$htmlfilelist .= "<div style='white-space: nowrap; padding-left: 16px;'>\n";
-				$htmlfilelist .= "<a href='javascript:void(0);' onclick=\"parent.document.getElementById('filepath').value='".$newpath."'; parent.document.getElementById('current_file').value = '".$newpath."'; makeRequest('file_read.php','file=".urlencode($newpath)."');\" title='".$newpath." &#10; ".$filesize." KB'>";
-				$htmlfilelist .= "<img src='resources/images/icon_file.png' border='0' align='absmiddle' style='margin: 1px 2px 3px -1px;'>".$filename."</a>\n";
-				$htmlfilelist .= "</div>\n";
+				$html_file_list .= "<div style='white-space: nowrap; padding-left: 16px;'>\n";
+				$html_file_list .= "<a href='javascript:void(0);' onclick=\"parent.document.getElementById('filepath').value='".$newpath."'; parent.document.getElementById('current_file').value = '".$newpath."'; makeRequest('file_read.php','file=".urlencode($newpath)."');\" title='".$newpath." &#10; ".$filesize." KB'>";
+				$html_file_list .= "<img src='resources/images/icon_file.png' border='0' align='absmiddle' style='margin: 1px 2px 3px -1px;'>".$filename."</a>\n";
+				$html_file_list .= "</div>\n";
 			}
 		}
 
-		closedir($dirlist);
-		return $htmldirlist ."\n". $htmlfilelist;
+		closedir($dir_list);
+		return $html_dir_list ."\n". $html_file_list;
 	}
 
 //get the directory
@@ -144,7 +146,7 @@
 			$edit_directory = $_SESSION['switch']['conf']['dir'];
 			break;
 	}
-	if (!isset($edit_directory)) {
+	if (!isset($edit_directory) && is_array($_SESSION['editor']['path'])) {
 		foreach ($_SESSION['editor']['path'] as $path) {
 			if ($_SESSION["app"]["edit"]["dir"] == $path) {
 				$edit_directory = $path;
