@@ -95,7 +95,7 @@
 			$edit_directory = $_SESSION['switch']['conf']['dir'];
 			break;
 	}
-	if (!isset($edit_directory)) {
+	if (!isset($edit_directory) && is_array($_SESSION['editor']['path'])) {
 		foreach ($_SESSION['editor']['path'] as $path) {
 			if ($_SESSION["app"]["edit"]["dir"] == $path) {
 				$edit_directory = $path;
