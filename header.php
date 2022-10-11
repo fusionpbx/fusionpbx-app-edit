@@ -26,8 +26,8 @@
 */
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+$language = new text;
+$text = $language->get();
 
 echo "<html>";
 echo "<head>";
