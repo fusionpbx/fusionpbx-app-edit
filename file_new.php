@@ -34,7 +34,6 @@
 
 //includes files
 	require_once "resources/require.php";
-	require_once "resources/require.php";
 	require_once "resources/check_auth.php";
 
 //check permissions
