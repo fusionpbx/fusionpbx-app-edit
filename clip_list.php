@@ -146,7 +146,7 @@
 	echo "</script>";
 
 // keyboard shortcut bindings
-	echo "<script language='JavaScript' type='text/javascript' src='".PROJECT_PATH."/resources/jquery/jquery-3.4.1.min.js'></script>\n";
+	echo "<script language='JavaScript' type='text/javascript' src='".PROJECT_PATH."/resources/jquery/jquery-3.6.1.min.js'></script>\n";
 	echo "<script src='https://code.jquery.com/jquery-migrate-3.1.0.js'></script>\n";
 
 //save file
