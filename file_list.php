@@ -53,6 +53,7 @@
 		$dir_handle = opendir($dir);
 		$dir_array = array();
 		if (($dir_handle)) {
+			$x = 0;
 			while (false !== ($file = readdir($dir_handle))) {
 				if ($file != "." AND $file != "..") {
 					$newpath = $dir.'/'.$file;
