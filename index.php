@@ -73,11 +73,11 @@
 	}
 
 //load editor preferences/defaults
-	$setting_size = ($_SESSION["editor"]["font_size"]["text"] != '') ? $_SESSION["editor"]["font_size"]["text"] : '12px';
-	$setting_theme = ($_SESSION["editor"]["theme"]["text"] != '') ? $_SESSION["editor"]["theme"]["text"] : 'cobalt';
-	$setting_invisibles = ($_SESSION["editor"]["invisibles"]["boolean"] != '') ? $_SESSION["editor"]["invisibles"]["boolean"] : 'false';
-	$setting_indenting = ($_SESSION["editor"]["indent_guides"]["boolean"] != '') ? $_SESSION["editor"]["indent_guides"]["boolean"] : 'false';
-	$setting_numbering = ($_SESSION["editor"]["line_numbers"]["boolean"] != '') ? $_SESSION["editor"]["line_numbers"]["boolean"] : 'true';
+	$setting_size = !empty($_SESSION["editor"]["font_size"]["text"]) ? $_SESSION["editor"]["font_size"]["text"] : '12px';
+	$setting_theme = !empty($_SESSION["editor"]["theme"]["text"]) ? $_SESSION["editor"]["theme"]["text"] : 'cobalt';
+	$setting_invisibles = !empty($_SESSION["editor"]["invisibles"]["boolean"]) ? $_SESSION["editor"]["invisibles"]["boolean"] : 'false';
+	$setting_indenting = !empty($_SESSION["editor"]["indent_guides"]["boolean"]) ? $_SESSION["editor"]["indent_guides"]["boolean"] : 'false';
+	$setting_numbering = !empty($_SESSION["editor"]["line_numbers"]["boolean"]) ? $_SESSION["editor"]["line_numbers"]["boolean"] : 'true';
 
 //get and then set the favicon
 	if (isset($_SESSION['theme']['favicon']['text'])){
