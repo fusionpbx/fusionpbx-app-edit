@@ -84,7 +84,7 @@
 		$favicon = $_SESSION['theme']['favicon']['text'];
 	}
 	else {
-		$favicon = $project_path .'/themes/default/favicon.ico';
+		$favicon = $PROJECT_ROOT .'/themes/default/favicon.ico';
 	}
 
 //create a token
