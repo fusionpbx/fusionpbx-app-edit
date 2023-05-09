@@ -166,7 +166,7 @@
 					foreach($clips as $row) {
 						//clip
 						echo "<div style='white-space: nowrap;'>\n";
-						echo "<a href='javascript:void(0);' onclick=\"parent.insert_clip(document.getElementById('before_".$row['uuid']."').value, document.getElementById('after_".$row['uuid']."').value);\">";
+						echo "<a href='javascript:void(0);' onclick=\"parent.document.getElementById('clip_uuid').value='".$row['uuid']."'; parent.document.getElementById('clip_name').value='".$row['name']."';\">";
 						echo "<img src='resources/images/icon_file.png' border='0' align='absmiddle' style='margin: 1px 2px 3px -1px;'>";
 						echo escape($row['name']);
 						echo "</a>\n";
