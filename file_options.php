@@ -50,9 +50,9 @@
 	require_once "header.php";
 
 //set the variables
-	$file = $_GET["file"];
+	$file = (empty($_GET["file"])) ? '' : $_GET["file"];
 	$file = str_replace ("\\", "/", $file);
-	$folder = $_GET["folder"];
+	$folder = (empty($_GET["folder"])) ? '' : $_GET["folder"];
 	$folder = str_replace ($file, "", $folder);
 	$urlpath = str_replace ($_SERVER["DOCUMENT_ROOT"], "", $folder);
 
