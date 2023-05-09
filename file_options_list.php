@@ -56,27 +56,30 @@
 		$htmlfilelist = '';
 		$dirlist = opendir($dir);
 		$dir_array = array();
-		if($dirlist !== false) while (false !== ($file = readdir($dirlist))) {
-			if ($file != "." AND $file != ".."){
-				$newpath = $dir.'/'.$file;
-				$level = explode('/',$newpath);
-				if (
-					substr(strtolower($newpath), -4) == ".svn" ||
-					substr(strtolower($newpath), -4) == ".git" ||
-					substr(strtolower($newpath), -3) == ".db" ||
-					substr(strtolower($newpath), -4) == ".jpg" ||
-					substr(strtolower($newpath), -4) == ".gif" ||
-					substr(strtolower($newpath), -4) == ".png" ||
-					substr(strtolower($newpath), -4) == ".ico" ||
-					substr(strtolower($newpath), -4) == ".ttf"
-					){
-					//ignore certain files (and folders)
+		if($dirlist !== false) {
+			$x = 0;
+			while (false !== ($file = readdir($dirlist))) {
+				if ($file != "." AND $file != ".."){
+					$newpath = $dir.'/'.$file;
+					$level = explode('/',$newpath);
+					if (
+						substr(strtolower($newpath), -4) == ".svn" ||
+						substr(strtolower($newpath), -4) == ".git" ||
+						substr(strtolower($newpath), -3) == ".db" ||
+						substr(strtolower($newpath), -4) == ".jpg" ||
+						substr(strtolower($newpath), -4) == ".gif" ||
+						substr(strtolower($newpath), -4) == ".png" ||
+						substr(strtolower($newpath), -4) == ".ico" ||
+						substr(strtolower($newpath), -4) == ".ttf"
+						){
+						//ignore certain files (and folders)
+					}
+					else {
+						$dir_array[] = $newpath;
+					}
+					if ($x > 1000) { break; };
+					$x++;
 				}
-				else {
-					$dir_array[] = $newpath;
-				}
-				if ($x > 1000) { break; };
-				$x++;
 			}
 		}
 
