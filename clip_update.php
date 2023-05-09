@@ -50,10 +50,10 @@
 		$clip_uuid = $_POST["id"];
 		$clip_name = $_POST["clip_name"];
 		$clip_folder = $_POST["clip_folder"];
-		$clip_text_start = empty($clip_text_start) ? '' : $_POST["clip_text_start"];
-		$clip_text_end = empty($clip_text_end) ? '' : $_POST["clip_text_end"];
-		$clip_desc = empty($clip_order) ? '' : $_POST["clip_desc"];
-		$clip_order = empty($clip_order) ? 0 : $_POST["clip_order"];
+		$clip_text_start = empty($_POST["clip_text_start"]) ? '' : $_POST["clip_text_start"];
+		$clip_text_end = empty($_POST["clip_text_end"]) ? '' : $_POST["clip_text_end"];
+		$clip_desc = empty($_POST["clip_desc"]) ? '' : $_POST["clip_desc"];
+		$clip_order = empty($_POST["clip_order"]) ? '0' : $_POST["clip_order"];
 
 		//no slashes
 		$clip_name = str_replace('/', '|', $clip_name);
