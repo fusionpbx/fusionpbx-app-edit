@@ -173,10 +173,12 @@
 	$result = $database->select($sql, null, 'all');
 	unset($sql);
 
-	if (is_array($result) && @sizeof($result) != 0) {
+	if (!empty($result) && is_array($result) && @sizeof($result) != 0) {
 		$master_array = array();
 		foreach ($result as $row) {
-			$clip_folder = rtrim($row['clip_folder'], '/');
+			if !empty($row['clip_folder']) {
+				$clip_folder = rtrim($row['clip_folder'], '/');
+			}
 			$clip_folder .= '/'.$row['clip_name'];
 
 			$parts = explode('/', $clip_folder);
@@ -199,7 +201,7 @@
 		unset($result, $row);
 
 		function parse_array($array) {
-			if (is_array($array)) {
+			if (!empty(is_array($array)) && is_array($array)) {
 				foreach ($array as $folder_name => $clips) {
 					//folder
 					echo "<a onclick='Toggle(this);' style='display: block; cursor: pointer; text-decoration: none;'><img src='resources/images/icon_folder.png' border='none' align='absmiddle' style='margin: 1px 2px 3px 0px;'>".$folder_name."</a>";
