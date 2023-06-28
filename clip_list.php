@@ -172,7 +172,7 @@
 	if (!empty($result) && is_array($result) && @sizeof($result) != 0) {
 		$master_array = array();
 		foreach ($result as $row) {
-			if !empty($row['clip_folder']) {
+			if (!empty($row['clip_folder'])) {
 				$clip_folder = rtrim($row['clip_folder'], '/');
 			}
 			$clip_folder .= '/'.$row['clip_name'];
