@@ -139,11 +139,25 @@
 					$file_path = str_replace ('//', '/', $file_path);
 					$file_path = str_replace ("\\", "/", $file_path);
 					if (file_exists($file_path)) {
+						//create a file handle
 						$handle = fopen($file_path, 'wb');
 						if (!$handle) {
 							throw new Exception('Write Failed - Check File Owner & Permissions');
 						}
-						fwrite($handle, str_replace ("\r\n", "\n", $_POST["content"]));
+
+						//build a array of the content
+						$lines = explode("\n", str_replace ("\r\n", "\n", $_POST["content"]));
+
+						//remove trailing spaces
+						$file_content = '';
+						foreach ($lines as $line) {
+							$file_content .= rtrim($line) . "\n";
+						}
+
+						//save the file
+						fwrite($handle, $file_content);
+
+						//close the file handle
 						fclose($handle);
 					}
 
@@ -161,3 +175,4 @@
 	}
 
 ?>
+
