@@ -17,7 +17,7 @@
 
 	The Initial Developer of the Original Code is
 	Mark J Crane <markjcrane@fusionpbx.com>
-	Portions created by the Initial Developer are Copyright (C) 2008-2023
+	Portions created by the Initial Developer are Copyright (C) 2008-2024
 	the Initial Developer. All Rights Reserved.
 
 	Contributor(s):
@@ -102,8 +102,10 @@
 	<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 	<title><?php echo $title; ?></title>
 	<link rel="icon" type="image/x-icon" href="<?php echo $favicon; ?>">
+	<link rel='stylesheet' type='text/css' href='<?php echo PROJECT_PATH; ?>/resources/fontawesome/css/all.min.css.php'>
 	<script language="JavaScript" type="text/javascript" src="<?php echo PROJECT_PATH; ?>/resources/jquery/jquery-3.6.1.min.js"></script>
 	<script src='https://code.jquery.com/jquery-migrate-3.1.0.js'></script>
+	<script language='JavaScript' type='text/javascript' src='<?php echo PROJECT_PATH; ?>/resources/fontawesome/js/solid.min.js.php' defer></script>
 	<script language="JavaScript" type="text/javascript">
 		function submit_check() {
 			if (document.getElementById('filepath').value != '') {
@@ -130,7 +132,14 @@
 
 		function toggle_sidebar() {
 			var td_sidebar = document.getElementById('sidebar');
-			td_sidebar.style.display = (td_sidebar.style.display == '') ? 'none' : '';
+			if (td_sidebar.style.display == '') {
+				document.getElementById('td_save').style.paddingLeft = '12px';
+				td_sidebar.style.display = 'none';
+			}
+			else {
+				document.getElementById('td_save').style.paddingLeft = '0';
+				td_sidebar.style.display = '';
+			}
 			focus_editor();
 		}
 
@@ -173,20 +182,18 @@
 
 	</script>
 	<style>
-		img.control {
+		div#editor {
+			box-shadow: 0 5px 15px #333;
+			}
+
+		i.ace_control {
 			cursor: pointer;
-			width: auto;
-			height: 23px;
-			border: none;
+			margin-right: 5px;
 			opacity: 0.5;
 			}
 
-		img.control:hover {
+		i.ace_control:hover {
 			opacity: 1.0;
-			}
-
-		div#editor {
-			box-shadow: 0 5px 15px #333;
 			}
 	</style>
 </head>
@@ -204,20 +211,16 @@
 			<input type='hidden' name='token' id='token' value='<?php echo $_SESSION['token']; ?>'>
 			<table cellpadding='0' cellspacing='0' border='0' style='width: 100%;'>
 				<tr>
-					<td valign='middle'><img src='resources/images/icon_save.png' title='Save Changes [Ctrl+S]' class='control' onclick="save();";></td>
-					<td align='left' valign='middle' width='100%' style='padding: 0 15px 0 6px;'><input id='current_file' type='text' style='height: 23px; width: 100%;'></td>
-					<!--
-					<td style='padding: 0;'><img src="data:image/png;base64, <?php echo $image_base64; ?>" /></td>
-					<td align='left' valign='middle' width='80' style='padding: 0 6px 0 0;'><input type='text' class='txt' style='width: 80px; text-align: center;' name='code' id='code' value='' placeholder='CAPTCHA'></td>
-					-->
+					<td valign='middle' id='td_save'><i class='fas fa-save fa-lg ace_control' title="<?php echo $text['label-save_changes']; ?>" onclick="save();"></i></td>
+					<td align='left' valign='middle' width='100%' style='padding: 0 15px 0 18px;'><input id='current_file' type='text' style='height: 23px; width: 100%;'></td>
 					<td style='padding: 0;'><img src='resources/images/blank.gif' style='width: 1px; height: 40px; border: none;'></td>
-					<td valign='middle' style='padding-left: 6px;'><img src='resources/images/icon_sidebar.png' title='Toggle Side Bar [Ctrl+Q]' class='control' onclick="toggle_sidebar();"></td>
-					<td valign='middle' style='padding-left: 6px;'><img src='resources/images/icon_numbering.png' title='Toggle Line Numbers' class='control' onclick="toggle_option('numbering');"></td>
-					<td valign='middle' style='padding-left: 6px;'><img src='resources/images/icon_invisibles.png' title='Toggle Invisibles' class='control' onclick="toggle_option('invisibles');"></td>
-					<td valign='middle' style='padding-left: 6px;'><img src='resources/images/icon_indenting.png' title='Toggle Indent Guides' class='control' onclick="toggle_option('indenting');"></td>
-					<td valign='middle' style='padding-left: 6px;'><img src='resources/images/icon_replace.png' title='Show Find/Replace [Ctrl+H]' class='control' onclick="editor.execCommand('replace');"></td>
-					<td valign='middle' style='padding-left: 6px;'><img src='resources/images/icon_goto.png' title='Show Go To Line' class='control' onclick="editor.execCommand('gotoline');"></td>
-					<td valign='middle' style='padding-left: 10px;'>
+					<td valign='middle' style='padding-left: 6px;'><i class='fas fa-window-maximize fa-lg fa-rotate-270 ace_control' title="<?php echo $text['label-toggle_side_bar']; ?>" onclick="toggle_sidebar();"></i></td>
+					<td valign='middle' style='padding-left: 6px;'><i class='fas fa-list-ul fa-lg ace_control' title="<?php echo $text['label-toggle_line_numbers']; ?>" onclick="toggle_option('numbering');"></i></td>
+					<td valign='middle' style='padding-left: 6px;'><i class='fas fa-eye-slash fa-lg ace_control' title="<?php echo $text['label-toggle_invisibles']; ?>" onclick="toggle_option('invisibles');"></i></td>
+					<td valign='middle' style='padding-left: 6px;'><i class='fas fa-indent fa-lg ace_control' title="<?php echo $text['label-toggle_indent_guides']; ?>" onclick="toggle_option('indenting');"></i></td>
+					<td valign='middle' style='padding-left: 6px;'><i class='fas fa-search fa-lg ace_control' title="<?php echo $text['label-find_replace']; ?>" onclick="editor.execCommand('replace');"></i></td>
+					<td valign='middle' style='padding-left: 6px;'><i class='fas fa-chevron-down fa-lg ace_control' title="<?php echo $text['label-go_to_line']; ?>" onclick="editor.execCommand('gotoline');"></i></td>
+					<td valign='middle' style='padding-left: 15px;'>
 						<select id='mode' style='height: 23px; max-width: 70px;' onchange="editor.getSession().setMode('ace/mode/' + this.options[this.selectedIndex].value); focus_editor();">
 							<?php
 							$modes['php'] = 'PHP';
