@@ -89,7 +89,7 @@
 						$edit_directory = $_SERVER["DOCUMENT_ROOT"].PROJECT_PATH."/resources/templates/provision";
 					}
 					break;
-				default:	
+				default:
 					$edit_directory = $_SERVER["DOCUMENT_ROOT"].PROJECT_PATH."/resources/templates/provision/";
 			}
 			break;
@@ -119,8 +119,14 @@
 
 //validate the path
 	if (realpath($path_prefix) == realpath($edit_directory)) {
+		//clear the output
+		ob_clean();
+
+		//send the content of the file
+		echo file_get_contents($file_name);
 
 		//get the contents of the file
+		/*
 		$handle = fopen($file_name, "r");
 		if ($handle) {
 			while (!feof($handle)) {
@@ -129,6 +135,7 @@
 			}
 			fclose($handle);
 		}
+		*/
 
 	}
 
