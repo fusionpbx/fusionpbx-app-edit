@@ -89,12 +89,6 @@
 	$_SESSION['keys'][$key_name] = bin2hex(random_bytes(32));
 	$_SESSION['token'] = hash_hmac('sha256', $key_name, $_SESSION['keys'][$key_name]);
 
-//generate the captcha image
-	$_SESSION['captcha'] = generate_password(7, 2);
-	$captcha = new captcha;
-	$captcha->code = $_SESSION['captcha'];
-	$image_base64 = $captcha->image_base64();
-
 ?>
 
 <html>
