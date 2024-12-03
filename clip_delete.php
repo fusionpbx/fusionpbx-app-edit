@@ -49,7 +49,7 @@
 	if (is_uuid($clip_uuid)) {
 		$array['clips'][0]['clip_uuid'] = $clip_uuid;
 
-		$p = new permissions;
+		$p = permissions::new();
 		$p->add('clip_delete', 'temp');
 
 		$database = new database;

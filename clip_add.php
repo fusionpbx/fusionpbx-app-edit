@@ -64,7 +64,7 @@ if (count($_POST)>0) {
 	$array['clips'][0]['clip_desc'] = $clip_desc;
 	$array['clips'][0]['clip_order'] = $clip_order;
 
-	$p = new permissions;
+	$p = permissions::new();
 	$p->add('clip_add', 'temp');
 
 	$database = new database;

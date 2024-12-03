@@ -64,7 +64,7 @@
 		$array['clips'][0]['clip_desc'] = $clip_desc;
 		$array['clips'][0]['clip_order'] = $clip_order;
 
-		$p = new permissions;
+		$p = permissions::new();
 		$p->add('clip_edit', 'temp');
 
 		$database = new database;
