@@ -330,9 +330,9 @@
         </div>
       </form>
       <!-- Editor -->
-      <div id="editor" style="text-align: left; width: 100%; height: calc(100% - 30px); font-size: 12px;"></div>
+	  	<div id="editor" style="text-align: left; width: 100%; height: calc(100% - 30px); font-size: 12px;"></div>
+	  </div>
     </div>
-  </div>
 
   <script src="<?php echo PROJECT_PATH; ?>/resources/ace/ace.js" charset="utf-8"></script>
   <script src="<?php echo PROJECT_PATH; ?>/resources/ace/ext-inline_autocomplete.js"></script>
@@ -396,8 +396,8 @@ async function init_ace_completion() {
 			var line = session.getLine(pos.row);
 
 			// Use regex to detect object (->) or static (::) access
-			var objectMatch = line.match(/(\w+)\s*->\s*\w*$/);
-			var staticMatch = line.match(/(\w+)::\w*$/);
+			const objectMatch = line.match(/(\w+)\s*->\s*\w*$/);
+			const staticMatch = line.match(/(\w+)::\w*$/);
 
 			// Extract the referenced class name (simple name)
 			var ref_name = objectMatch ? objectMatch[1] : (staticMatch ? staticMatch[1] : null);
@@ -421,11 +421,24 @@ async function init_ace_completion() {
 
 			// Map the methods of the matched class into completions.
 			var completions = phpMethods[matched_class].map(function(method) {
+				if (staticMatch !== null) {
+					if (method.static) {
+						return {
+							caption: method.name + method.params,
+							snippet: method.name + method.params.replace(/\$/g, "\\$"),
+							meta: matched_class,
+							docHTML: method.doc ? method.doc : "No Documentation"
+						};
+					} else {
+						return {};
+					}
+				}
+				//you can call a static method on an object instance because php is like that
 				return {
-					caption: method.name + method.params, // Shows the method signature
-					snippet: method.name + method.params.replace(/\$/g, "\\$"), // Inserts the method with placeholders
-					meta: matched_class + " Method", // Display the fully qualified class name
-					docHTML: method.doc ? method.doc : "No Documentation Available"
+					caption: method.name + method.params,
+					snippet: method.name + method.params.replace(/\$/g, "\\$"),
+					meta: matched_class,
+					docHTML: method.doc ? method.doc : "No Documentation"
 				};
 			});
 
