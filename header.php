@@ -71,7 +71,7 @@ echo "//-->\n";
 echo "</style>\n";
 
 
-echo "<SCRIPT language=\"JavaScript\">\n";
+echo "<script>\n";
 echo "<!--\n";
 echo "function confirmdelete(url)\n";
 echo "{\n";
@@ -81,9 +81,7 @@ echo "      window.location=url;\n";
 echo " }\n";
 echo "}\n";
 echo "//-->\n";
-echo "</SCRIPT>\n";
+echo "</script>\n";
 echo "</head>\n";
 echo "<body style='margin: 0; padding: 5px;'>\n";
 echo "<div align='center'>\n";
-
-?>

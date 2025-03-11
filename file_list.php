@@ -69,7 +69,7 @@
 					else {
 						$dir_array[] = $newpath;
 					}
-					if ($x > 1000) { break; };
+					if ($x > 1000) { break; }
 					$x++;
 				}
 			}
@@ -92,7 +92,7 @@
 				$newpath = str_replace ('//', '/', $newpath);
 				$newpath = str_replace ("\\", "/", $newpath);
 				$html_file_list .= "<div style='white-space: nowrap; padding-left: 16px;'>\n";
-				$html_file_list .= "<a href='javascript:void(0);' onclick=\"parent.document.getElementById('filepath').value='".$newpath."'; parent.document.getElementById('current_file').value = '".$newpath."'; makeRequest('file_read.php','file=".urlencode($newpath)."');\" title='".$newpath." &#10; ".$filesize." KB'>";
+				$html_file_list .= "<a href='javascript:void(0);' onclick=\"document.getElementById('filepath').value='".$newpath."'; document.getElementById('current_file').value = '".$newpath."'; makeRequest('file_read.php','file=".urlencode($newpath)."');\" title='".$newpath." &#10; ".$filesize." KB'>";
 				$html_file_list .= "<img src='resources/images/icon_file.png' border='0' align='absmiddle' style='margin: 1px 2px 3px -1px;'>".$filename."</a>\n";
 				$html_file_list .= "</div>\n";
 			}
@@ -172,99 +172,15 @@
 	}
 
 
-
-//define ajax functions
-echo "<script type=\"text/javascript\" language=\"javascript\">\n";
-echo "    function makeRequest(url, strpost) {\n";
-echo "        var http_request = false;\n";
-echo "\n";
-echo "        if (window.XMLHttpRequest) { // Mozilla, Safari, ...\n";
-echo "            http_request = new XMLHttpRequest();\n";
-echo "            if (http_request.overrideMimeType) {\n";
-echo "                http_request.overrideMimeType('text/xml');\n";
-echo "                // See note below about this line\n";
-echo "            }\n";
-echo "        } else if (window.ActiveXObject) { // IE\n";
-echo "            try {\n";
-echo "                http_request = new ActiveXObject(\"Msxml2.XMLHTTP\");\n";
-echo "            } catch (e) {\n";
-echo "                try {\n";
-echo "                    http_request = new ActiveXObject(\"Microsoft.XMLHTTP\");\n";
-echo "                } catch (e) {}\n";
-echo "            }\n";
-echo "        }\n";
-echo "\n";
-echo "        if (!http_request) {\n";
-echo "            alert('".$text['message-give-up']."');\n";
-echo "            return false;\n";
-echo "        }\n";
-echo "        http_request.onreadystatechange = function() { returnContent(http_request); };\n";
-echo "        if (http_request.overrideMimeType) {\n";
-echo "              http_request.overrideMimeType('text/html');\n";
-echo "        }\n";
-echo "        http_request.open('POST', url, true);\n";
-echo "\n";
-echo "\n";
-echo "        if (strpost.length == 0) {\n";
-echo "            //http_request.send(null);\n";
-echo "            http_request.send('name=value&foo=bar');\n";
-echo "        }\n";
-echo "        else {\n";
-echo "            http_request.setRequestHeader('Content-Type','application/x-www-form-urlencoded');\n";
-echo "            http_request.send(strpost);\n";
-echo "        }\n";
-echo "\n";
-echo "    }\n";
-echo "\n";
-echo "    function returnContent(http_request) {\n";
-echo "\n";
-echo "        if (http_request.readyState == 4) {\n";
-echo "            if (http_request.status == 200) {\n";
-echo "			parent.document.getElementById('editor_source').value=http_request.responseText;";
-echo "			parent.editor.getSession().setValue(parent.document.getElementById('editor_source').value);";
-echo "			parent.editor.gotoLine(1);";
-echo "			parent.editor.scrollToLine(1, true, true, function() {});";
-echo "			parent.editor.focus();";
-echo "\n";
-echo "            }\n";
-echo "            else {\n";
-echo "                alert('".$text['message-problem']."');\n";
-echo "            }\n";
-echo "        }\n";
-echo "\n";
-echo "    }\n";
-echo "</script>";
-
-
-echo "<SCRIPT LANGUAGE=\"JavaScript\">\n";
-//echo "// ---------------------------------------------\n";
-//echo "// --- http://www.codeproject.com/jscript/dhtml_treeview.asp\n";
-//echo "// --- Name:    Easy DHTML Treeview           --\n";
-//echo "// --- Author:  D.D. de Kerf                  --\n";
-//echo "// --- Version: 0.2          Date: 13-6-2001  --\n";
-//echo "// ---------------------------------------------\n";
-echo "function Toggle(node) {\n";
-echo "	// Unfold the branch if it isn't visible\n";
-echo "	if (node.nextSibling.style.display == 'none') {\n";
-echo "  	node.nextSibling.style.display = 'block';\n";
-echo "	}\n";
-echo "	// Collapse the branch if it IS visible\n";
-echo "	else {\n";
-echo "  	node.nextSibling.style.display = 'none';\n";
-echo "	}\n";
-echo "\n";
-echo "}\n";
-echo "</SCRIPT>";
-
 // keyboard shortcut bindings
-echo "<script language='JavaScript' type='text/javascript' src='".PROJECT_PATH."/resources/jquery/jquery-3.6.1.min.js'></script>\n";
+echo "<script src='".PROJECT_PATH."/resources/jquery/jquery-3.6.1.min.js'></script>\n";
 echo "<script src='https://code.jquery.com/jquery-migrate-3.1.0.js'></script>\n";
 
 //save file
-key_press('ctrl+s', 'down', 'window', null, null, "parent.$('form#frm_edit').submit(); return false;", true);
+key_press('ctrl+s', 'down', 'window', null, null, "$('form#frm_edit').submit(); return false;", true);
 
 //open file manager/clip library pane
-key_press('ctrl+q', 'down', 'window', null, null, 'parent.toggle_sidebar(); parent.focus_editor(); return false;', true);
+key_press('ctrl+q', 'down', 'window', null, null, 'toggle_sidebar(); focus_editor(); return false;', true);
 
 //prevent backspace (browser history back)
 key_press('backspace', 'down', 'window', null, null, 'return false;', true);
@@ -274,17 +190,18 @@ echo "<body style='margin: 0px; padding: 5px;'>\n";
 
 echo "<div style='text-align: left; padding-top: 3px; padding-bottom: 3px;'><a href='javascript:void(0);' onclick=\"window.open('file_options.php','filewin','left=20,top=20,width=310,height=350,toolbar=0,resizable=0');\" style='text-decoration:none;' title='".$text['label-files']."'><img src='resources/images/icon_gear.png' border='0' align='absmiddle' style='margin: 0px 2px 4px -1px;'>".$text['label-files']."</a></div>\n";
 echo "<div style='text-align: left; margin-left: -16px;'>\n";
-if (file_exists($edit_directory)) {
-	echo recur_dir($edit_directory);
+if (function_exists('apcu_enabled') && apcu_enabled() && apcu_exists('edit_html_list')) {
+	echo apcu_fetch('edit_html_list');
+	exit();
 }
+
+if (file_exists($edit_directory)) {
+	$edit_html_list = recur_dir($edit_directory);
+
+	if (function_exists('apcu_enabled') && apcu_enabled()) {
+		apcu_store('edit_html_list', $edit_html_list); // only available for 5 minutes
+	}
+	echo $edit_html_list;
+}
+
 echo "</div>\n";
-
-require_once "footer.php";
-
-unset ($result_count);
-unset ($result);
-unset ($key);
-unset ($val);
-unset ($c);
-
-?>

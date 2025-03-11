@@ -63,5 +63,3 @@
 
 //redirect the browser
 	header("Location: clip_options.php");
-
-?>
