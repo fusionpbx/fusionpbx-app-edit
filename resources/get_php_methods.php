@@ -16,8 +16,15 @@ foreach ($classes_to_scan as $class => $path) {
 		continue;
 	}
 
-	// Skip internal classes
+	// Guard against removed classes
+	if (!class_exists($class)) {
+		continue;
+	}
+
+	// Create the RefectionClass for inspecting class
 	$ref = new ReflectionClass($class);
+
+	// Skip internal classes
 	if ($ref->isInternal()) {
 		continue;
 	}
