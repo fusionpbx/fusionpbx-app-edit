@@ -106,13 +106,13 @@
 	if (!isset($_SESSION)) { session_start(); }
 	switch ($_SESSION["app"]["edit"]["dir"]) {
 		case 'scripts':
-			$edit_directory = $_SESSION['switch']['scripts']['dir'];
+			$edit_directory = $settings->get('switch', 'scripts');
 			break;
 		case 'php':
-			$edit_directory = $_SERVER["DOCUMENT_ROOT"].'/'.PROJECT_PATH;
+			$edit_directory = dirname(__DIR__, 2);
 			break;
 		case 'grammar':
-			$edit_directory = $_SESSION['switch']['grammar']['dir'];
+			$edit_directory = $settings->get('switch', 'grammar');
 			break;
 		case 'provision':
 			switch (PHP_OS) {
@@ -159,18 +159,12 @@
 			}
 			break;
 		case 'xml':
-			$edit_directory = $_SESSION['switch']['conf']['dir'];
+			$edit_directory = $settings->get('switch', 'conf');
 			break;
+		default:
+			//do not allow unknown settings
+			exit();
 	}
-	if (!isset($edit_directory) && is_array($_SESSION['editor']['path'])) {
-		foreach ($_SESSION['editor']['path'] as $path) {
-			if ($_SESSION["app"]["edit"]["dir"] == $path) {
-				$edit_directory = $path;
-				break;
-			}
-		}
-	}
-
 
 // keyboard shortcut bindings
 echo "<script src='".PROJECT_PATH."/resources/jquery/jquery-3.6.1.min.js'></script>\n";
@@ -190,17 +184,10 @@ echo "<body style='margin: 0px; padding: 5px;'>\n";
 
 echo "<div style='text-align: left; padding-top: 3px; padding-bottom: 3px;'><a href='javascript:void(0);' onclick=\"window.open('file_options.php','filewin','left=20,top=20,width=310,height=350,toolbar=0,resizable=0');\" style='text-decoration:none;' title='".$text['label-files']."'><img src='resources/images/icon_gear.png' border='0' align='absmiddle' style='margin: 0px 2px 4px -1px;'>".$text['label-files']."</a></div>\n";
 echo "<div style='text-align: left; margin-left: -16px;'>\n";
-if (function_exists('apcu_enabled') && apcu_enabled() && apcu_exists('edit_html_list')) {
-	echo apcu_fetch('edit_html_list');
-	exit();
-}
 
 if (file_exists($edit_directory)) {
 	$edit_html_list = recur_dir($edit_directory);
 
-	if (function_exists('apcu_enabled') && apcu_enabled()) {
-		apcu_store('edit_html_list', $edit_html_list); // only available for 5 minutes
-	}
 	echo $edit_html_list;
 }
 

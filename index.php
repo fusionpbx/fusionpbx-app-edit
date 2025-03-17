@@ -43,46 +43,49 @@
 	$text = $language->get();
 
 //set the directory title and mode
-	$_SESSION["app"]["edit"]["dir"] = $_GET["dir"];
-	$title = escape($_GET["dir"]);
-	unset($mode);
 	switch ($_GET["dir"]) {
 		case 'xml':
 			$title = 'XML';
 			$mode = 'xml';
+			$dir = 'xml';
 			break;
 		case 'provision':
 			$title = 'Provision';
 			$mode = 'xml';
+			$dir = 'provision';
 			break;
 		case 'php':
 			$title = 'PHP';
 			$mode = 'php';
+			$dir = 'php';
 			break;
 		case 'scripts':
 			$title = 'Scripts';
 			$mode = 'lua';
+			$dir = 'scripts';
 			break;
 		case 'grammar':
 			$title = 'Grammar';
 			$mode = 'xml';
-		default: $mode = 'text';
+			$dir = 'grammar';
+			break;
+		default:
+			$mode = 'text';
+			$dir = '';
 	}
+
+//save the sanitized value
+	$_SESSION['app']['edit']['dir'] = $dir;
 
 //load editor preferences/defaults
-	$setting_size = !empty($_SESSION["editor"]["font_size"]["text"]) ? $_SESSION["editor"]["font_size"]["text"] : '12px';
-	$setting_theme = !empty($_SESSION["editor"]["theme"]["text"]) ? $_SESSION["editor"]["theme"]["text"] : 'cobalt';
-	$setting_invisibles = isset($_SESSION['editor']['invisibles']['text']) ? $_SESSION['editor']['invisibles']["text"] : 'false';
-	$setting_indenting = isset($_SESSION['editor']['indent_guides']['text']) ? $_SESSION['editor']['indent_guides']["text"]: 'false';
-	$setting_numbering = isset($_SESSION['editor']['line_numbers']['text']) ? $_SESSION['editor']['line_numbers']["text"] : 'true';
+	$setting_size       = $settings->get('editor', 'font_size', '12px');
+	$setting_theme      = $settings->get('editor', 'theme', 'cobalt');
+	$setting_invisibles = $settings->get('editor', 'invisibles','false');
+	$setting_indenting  = $settings->get('editor', 'indent_guides','false');
+	$setting_numbering  = $settings->get('editor', 'line_numbers','true');
 
 //get and then set the favicon
-	if (isset($_SESSION['theme']['favicon']['text'])){
-		$favicon = $_SESSION['theme']['favicon']['text'];
-	}
-	else {
-		$favicon = PROJECT_ROOT .'/themes/default/favicon.ico';
-	}
+	$favicon = $settings->get('theme', 'favicon', PROJECT_ROOT .'/themes/default/favicon.ico');
 
 //create a token
 	$key_name = '/app/edit/'.$mode;
