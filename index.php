@@ -101,7 +101,6 @@
 	<link rel="icon" type="image/x-icon" href="<?php echo $favicon; ?>">
 	<link rel='stylesheet' type='text/css' href='<?php echo PROJECT_PATH; ?>/resources/fontawesome/css/all.min.css.php'>
 	<script language="JavaScript" type="text/javascript" src="<?php echo PROJECT_PATH; ?>/resources/jquery/jquery-3.6.1.min.js"></script>
-	<script src='https://code.jquery.com/jquery-migrate-3.1.0.js'></script>
 	<script language="JavaScript" type="text/javascript">
 		function submit_check() {
 			if (document.getElementById('filepath').value != '') {
@@ -373,143 +372,143 @@
     // Remove unwanted shortcuts
     editor.commands.bindKey("Ctrl-T", null); // Disable new browser tab shortcut
 
-// Levenshtein distance algorithm
-function levenshteinDistance(a, b) {
-	let m = a.length, n = b.length;
-	let dp = [];
-	for (let i = 0; i <= m; i++) {
-		dp[i] = [i];
-	}
-	for (let j = 0; j <= n; j++) {
-		dp[0][j] = j;
-	}
-	for (let i = 1; i <= m; i++) {
-		for (let j = 1; j <= n; j++) {
-			if (a[i - 1] === b[j - 1]) {
-				dp[i][j] = dp[i - 1][j - 1];
-			} else {
-				dp[i][j] = Math.min(
-					dp[i - 1][j] + 1,    // deletion
-					dp[i][j - 1] + 1,    // insertion
-					dp[i - 1][j - 1] + 1 // substitution
-				);
+	// Levenshtein distance algorithm
+	function levenshteinDistance(a, b) {
+		let m = a.length, n = b.length;
+		let dp = [];
+		for (let i = 0; i <= m; i++) {
+			dp[i] = [i];
+		}
+		for (let j = 0; j <= n; j++) {
+			dp[0][j] = j;
+		}
+		for (let i = 1; i <= m; i++) {
+			for (let j = 1; j <= n; j++) {
+				if (a[i - 1] === b[j - 1]) {
+					dp[i][j] = dp[i - 1][j - 1];
+				} else {
+					dp[i][j] = Math.min(
+						dp[i - 1][j] + 1,    // deletion
+						dp[i][j - 1] + 1,    // insertion
+						dp[i - 1][j - 1] + 1 // substitution
+					);
+				}
 			}
 		}
+		return dp[m][n];
 	}
-	return dp[m][n];
-}
 
-// Example function to find the closest matching class key
-function findClosestMatch(refName, phpMethods) {
-	let bestMatch = null;
-	let bestDistance = Infinity;
-	let lowerRef = refName.toLowerCase();
+	// Example function to find the closest matching class key
+	function findClosestMatch(refName, phpMethods) {
+		let bestMatch = null;
+		let bestDistance = Infinity;
+		let lowerRef = refName.toLowerCase();
 
-	// Loop through all classes in phpMethods
-	for (let key in phpMethods) {
-		// Assume the simple class name is the last segment after a backslash
-		let parts = key.split("\\");
-		let simpleName = parts[parts.length - 1].toLowerCase();
-		let distance = levenshteinDistance(lowerRef, simpleName);
-		if (distance < bestDistance) {
-			bestDistance = distance;
-			bestMatch = key;
-		}
-	}
-	return bestMatch;
-}
-
-// Function to fetch PHP class methods using fetch() with promises
-async function fetch_php_methods() {
-	try {
-		let response = await fetch('/resources/get_php_methods.php');
-		if (!response.ok) throw new Error("Failed to load PHP methods.");
-		return await response.json();
-	} catch (error) {
-		console.error("Error fetching PHP methods:", error);
-		return {}; // Return empty object on failure
-	}
-}
-
-// Initialize ACE auto-completion after fetching PHP methods
-async function init_ace_completion() {
-	const php_methods = await fetch_php_methods();
-
-	// Custom completer for PHP class methods
-	var php_class_completer = {
-		getCompletions: function(editor, session, pos, prefix, callback) {
-
-			// Define current_class_name by extracting the basename of the current file without extension.
-			var current_file_path = document.getElementById('current_file').value;
-			var current_file_name = current_file_path.split('/').pop();
-
-			// Remove the extension (everything after the last dot)
-			var current_class_name = current_file_name.replace(/\.[^/.]+$/, "");
-
-			// Get the current line text
-			var line = session.getLine(pos.row);
-
-			// Use regex to detect object (->) or static (::) access.
-			// This regex captures either "$this" or any other word.
-			const object_match = line.match(/(\$this|\w+)\s*->\s*\w*$/);
-			const static_match = line.match(/(self|static|\w+)::\w*$/);
-
-			// Extract the referenced name; if it's "$this", use the current_class_name.
-			var ref_name = object_match ? object_match[1] : (static_match ? static_match[1] : null);
-			if (ref_name === '$this' | ref_name === 'self' | ref_name === 'static') {
-				ref_name = current_class_name;
+		// Loop through all classes in phpMethods
+		for (let key in phpMethods) {
+			// Assume the simple class name is the last segment after a backslash
+			let parts = key.split("\\");
+			let simpleName = parts[parts.length - 1].toLowerCase();
+			let distance = levenshteinDistance(lowerRef, simpleName);
+			if (distance < bestDistance) {
+				bestDistance = distance;
+				bestMatch = key;
 			}
-
-			// If not a class, maybe a user function; use the prefix.
-			if (prefix.length > 0) ref_name = prefix;
-
-			if (!ref_name) return callback(null, []);
-
-			// Find the closest matching class using fuzzy matching.
-			var matched_class = findClosestMatch(ref_name, php_methods);
-			if (!matched_class) return callback(null, []);
-
-			// Map the methods of the matched class into completions.
-			var completions = php_methods[matched_class].map(function(method) {
-				// If static syntax is used but the method is not static, skip it.
-				if (static_match !== null && !method.static) {
-					return {};
-				}
-
-				// Map the item to the documentation
-				var item = {
-					caption: method.name + method.params,
-					snippet: method.name + method.params.replace(/\$/g, "\\$"),
-					meta: method.meta,
-					docHTML: method.doc ? method.doc : "No Documentation"
-				};
-
-				// TODO: fix italics
-				// Use italics in pop-up for static methods
-				if (method.static) {
-					item.className = "ace_static_method";
-				}
-
-				//return the mapped json object
-				return item;
-			});
-
-			callback(null, completions);
 		}
-	};
+		return bestMatch;
+	}
 
-	// Initialize ACE Editor
-	ace.require("ace/ext/language_tools");
+	// Function to fetch PHP class methods using fetch() with promises
+	async function fetch_php_methods() {
+		try {
+			let response = await fetch('/app/edit/resources/get_php_methods.php');
+			if (!response.ok) throw new Error("Failed to load PHP methods.");
+			return await response.json();
+		} catch (error) {
+			console.error("Error fetching PHP methods:", error);
+			return {}; // Return empty object on failure
+		}
+	}
 
-	// Replace the current list of completions with our custom one so we don't have every single word in the document listed as a completion option
-	editor.completers = [php_class_completer];
+	// Initialize ACE auto-completion after fetching PHP methods
+	async function init_ace_completion() {
+		const php_methods = await fetch_php_methods();
 
-	// Ensure font size is set
-	document.getElementById('editor').style.fontSize = '<?=$setting_size?>';
-	focus_editor();
-}
+		// Custom completer for PHP class methods
+		var php_class_completer = {
+			getCompletions: function(editor, session, pos, prefix, callback) {
 
-// Run auto-completion setup
+				// Define current_class_name by extracting the basename of the current file without extension.
+				var current_file_path = document.getElementById('current_file').value;
+				var current_file_name = current_file_path.split('/').pop();
+
+				// Remove the extension (everything after the last dot)
+				var current_class_name = current_file_name.replace(/\.[^/.]+$/, "");
+
+				// Get the current line text
+				var line = session.getLine(pos.row);
+
+				// Use regex to detect object (->) or static (::) access.
+				// This regex captures either "$this" or any other word.
+				const object_match = line.match(/(\$this|\w+)\s*->\s*\w*$/);
+				const static_match = line.match(/(self|static|\w+)::\w*$/);
+
+				// Extract the referenced name; if it's "$this", use the current_class_name.
+				var ref_name = object_match ? object_match[1] : (static_match ? static_match[1] : null);
+				if (ref_name === '$this' | ref_name === 'self' | ref_name === 'static') {
+					ref_name = current_class_name;
+				}
+
+				// If not a class, maybe a user function; use the prefix.
+				if (prefix.length > 0) ref_name = prefix;
+
+				if (!ref_name) return callback(null, []);
+
+				// Find the closest matching class using fuzzy matching.
+				var matched_class = findClosestMatch(ref_name, php_methods);
+				if (!matched_class) return callback(null, []);
+
+				// Map the methods of the matched class into completions.
+				var completions = php_methods[matched_class].map(function(method) {
+					// If static syntax is used but the method is not static, skip it.
+					if (static_match !== null && !method.static) {
+						return {};
+					}
+
+					// Map the item to the documentation
+					var item = {
+						caption: method.name + method.params,
+						snippet: method.name + method.params.replace(/\$/g, "\\$"),
+						meta: method.meta,
+						docHTML: method.doc ? method.doc : "No Documentation"
+					};
+
+					// TODO: fix italics
+					// Use italics in pop-up for static methods
+					if (method.static) {
+						item.className = "ace_static_method";
+					}
+
+					//return the mapped json object
+					return item;
+				});
+
+				callback(null, completions);
+			}
+		};
+
+		// Initialize ACE Editor
+		ace.require("ace/ext/language_tools");
+
+		// Replace the current list of completions with our custom one so we don't have every single word in the document listed as a completion option
+		editor.completers = [php_class_completer];
+
+		// Ensure font size is set
+		document.getElementById('editor').style.fontSize = '<?=$setting_size?>';
+		focus_editor();
+	}
+
+	// Run auto-completion setup
 	init_ace_completion();
 </script>
 </body>
