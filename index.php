@@ -359,8 +359,8 @@
       highlightGutterLine: false,
       useSoftTabs: false,
       enableBasicAutocompletion: true,
-      enableLiveAutocompletion: true,
-      enableSnippets: true
+	  enableLiveAutocompletion: <?php echo ($mode === 'php') ? 'true' : 'false'; ?>,
+      enableSnippets: <?php echo 'true' ?>
     });
 
     // Prevent form submission with Enter key
@@ -511,8 +511,10 @@
 		focus_editor();
 	}
 
-	// Run auto-completion setup
-	init_ace_completion();
+	if (<?php echo ($mode === 'php') ? 'true' : 'false'; ?>) {
+		// Run auto-completion setup
+		init_ace_completion();
+	}
 </script>
 </body>
 <script>
