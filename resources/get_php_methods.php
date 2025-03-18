@@ -71,7 +71,7 @@ foreach ($classes_to_scan as $class => $path) {
 			"params"  => "(" . implode(", ", $params) . ")",
 			"doc"     => $doc,
 			"static"  => $method->isStatic(),
-			"return"  => $return_type
+			"meta"    => $return_type
 		];
 	}
 	$class_methods[$class] = $methods;
