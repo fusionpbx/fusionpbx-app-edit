@@ -108,4 +108,3 @@
 		//include the footer
 		require_once "footer.php";
 	}
-?>

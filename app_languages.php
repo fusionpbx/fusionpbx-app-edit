@@ -815,5 +815,3 @@ $text['label-file']['uk-ua'] = "Файл:";
 $text['label-file']['zh-cn'] = "文件：";
 $text['label-file']['ja-jp'] = "ファイル：";
 $text['label-file']['ko-kr'] = "파일:";
-
-?>

@@ -268,5 +268,3 @@ if (!isset($_SESSION)) { session_start(); }
 echo "</div>\n";
 
 require_once "footer.php";
-
-?>

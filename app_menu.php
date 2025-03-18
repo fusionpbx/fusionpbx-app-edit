@@ -114,5 +114,3 @@
 	$apps[$x]['menu'][$y]['path'] = "/app/edit/index.php?dir=php";
 	$apps[$x]['menu'][$y]['groups'][] = "superadmin";
 	$y++;
-
-?>

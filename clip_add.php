@@ -133,5 +133,3 @@ if (count($_POST)>0) {
 
 //include the footer
 	require_once "footer.php";
-
-?>
