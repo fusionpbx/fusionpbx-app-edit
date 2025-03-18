@@ -148,26 +148,15 @@
 						//build a array of the content
 						$lines = explode("\n", str_replace ("\r\n", "\n", $_POST["content"]));
 
-						//go in reverse order to remove blank trailing lines at the end of the file
-						for ($i = count($lines) - 1; $i > 0; $i--) {
-							//find the last empty line
-							if (!empty($lines[$i])) {
-								//exit for loop
-								break;
-							}
-							//remember the last line index
-							$last_line = $i;
-						}
-
 						$file_content = '';
 
 						//remove trailing spaces on each line
-						for ($i = 0; $i < $last_line; $i++) {
-							$file_content .= rtrim($lines[$i]) . "\n";
+						foreach ($lines as $line) {
+							$file_content .= rtrim($line) . "\n";
 						}
 
-						//save the file
-						fwrite($handle, $file_content);
+						//save the file with single empty line
+						fwrite($handle, rtrim($file_content) . "\n");
 
 						//close the file handle
 						fclose($handle);
