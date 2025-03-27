@@ -42,6 +42,11 @@
 	$language = new text;
 	$text = $language->get();
 
+//create the settings object
+	if (!$settings) {
+		$settings = new settings();
+	}
+
 //set the directory title and mode
 	switch ($_GET["dir"]) {
 		case 'xml':
