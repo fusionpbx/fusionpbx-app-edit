@@ -82,6 +82,11 @@
 //save the sanitized value
 	$_SESSION['app']['edit']['dir'] = $dir;
 
+//ensure we have a settings object for older installs
+if (empty($settings) || !($settings instanceof settings)) {
+	$settings = new settings(['database' => database::new(), 'domain_uuid' => $domain_uuid ?? $_SESSION['domain_uuid'] ?? '', 'user_uuid' => $user_uuid ?? $_SESSION['user_uuid'] ?? '']);
+}
+
 //load editor preferences/defaults
 	$setting_size       = $settings->get('editor', 'font_size', '12px');
 	$setting_theme      = $settings->get('editor', 'theme', 'cobalt');
