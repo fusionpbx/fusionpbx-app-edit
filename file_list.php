@@ -38,6 +38,11 @@
 		exit;
 	}
 
+//create the settings object
+	if (!$settings) {
+		$settings = new settings();
+	}
+
 //add css and javascript
 	require_once "header.php";
 
