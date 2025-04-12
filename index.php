@@ -471,9 +471,9 @@ while (ob_get_level() > 0) {
 
 		//track by the filePath
 		session.id = filePath;
-		session.message = "Read " + content.length + " bytes";
+//		session.message = "Read " + content.length + " bytes";
 
-		loadedFiles.push({filePath: filePath, fileName: fileName, session: session});
+		document.getElementById('filepath').value = filePath;
         var tab = document.createElement('li');
         tab.setAttribute('data-file', filePath);
         tab.innerText = fileName;
@@ -494,9 +494,8 @@ while (ob_get_level() > 0) {
         };
         tab.appendChild(closeBtn);
         document.getElementById('fileTabs').appendChild(tab);
+		loadedFiles.push({filePath: filePath, fileName: fileName, session: session, originalContent: content});
 		activateTab(filePath);
-		//var file = loadedFiles.find(f => f.filePath === filePath);
-		//status_message.innerHTML = "Read " + file.content.length + " bytes";
     }
 
 	function updateCursorStatus() {
@@ -512,42 +511,38 @@ while (ob_get_level() > 0) {
         if (activeTab) activeTab.classList.add('active');
         var file = loadedFiles.find(f => f.filePath === filePath);
         if (file) {
+			document.getElementById('filepath').value = filePath;
 			//switch the editor to the session
 			editor.setSession(file.session);
 
 			//add a listener
-			editor.getSession().on('change', function(delta) {
-				const file = getActiveFile();
-				if (file) {
-					if (editor.getSession().getUndoManager().isClean()) {
-						status_message.innerHTML = "";
-						status_filepath.innerHTML = "New File";
-					} else {
-						file.session.message = "Modified";
-						status_message.innerHTML = "Modified";
-						file.session.tab.innerText = "*" + file.fileName;
-					}
-					//updateCursorStatus();
-				} else {
-					status_message.innerHTML = "";
-					status_filepath.innerHTML = "New File";
-				}
-			});
+			editor.getSession().on('change', updateStatusBar);
 
 			//add a cursor position listener
 			editor.selection.on('changeCursor', updateCursorStatus);
+        }
+		updateStatusBar();
+    }
 
-			//set filepath
-            document.getElementById('filepath').value = file.filePath;
-
-			//show status
-			status_message.innerHTML = file.session.message;
-			status_filepath.innerHTML = file.filePath;
-        } else {
+	function updateStatusBar(delta) {
+		const file = getActiveFile();
+		if (file) {
+			if (file.originalContent !== editor.getSession().getValue()) {
+				file.session.message = "Modified";
+				status_message.innerHTML = "Modified";
+				status_filepath.innerHTML = file.filePath;
+				file.session.tab.innerText = "*" + file.fileName;
+			} else {
+				status_message.innerHTML = "Read " + file.originalContent.length + " bytes";
+				status_filepath.innerHTML = file.filePath;
+				file.session.tab.innerText = file.fileName;
+			}
+		} else {
 			status_message.innerHTML = "";
 			status_filepath.innerHTML = "New File";
 		}
-    }
+		updateCursorStatus();
+	}
 
 	// Close the tab and remove it
 	// TODO: set a dialog if the isModified is still set
