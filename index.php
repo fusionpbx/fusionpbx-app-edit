@@ -382,16 +382,16 @@ while (ob_get_level() > 0) {
 	function getOptions() {
 		// Set Editor Options
 		return {
-			mode: 'ace/mode/<?php echo $mode; ?>',
+			mode: 'ace/mode/<?= $mode ?>',
 			theme: 'ace/theme/' + document.getElementById('theme').value,
 			selectionStyle: 'text',
 			cursorStyle: 'smooth',
-			showInvisibles: <?php echo $setting_invisibles; ?>,
-			displayIndentGuides: <?php echo $setting_indenting; ?>,
-			showLineNumbers: <?php echo $setting_numbering; ?>,
+			showInvisibles: <?= $setting_invisibles ?>,
+			displayIndentGuides: <?= $setting_indenting ?>,
+			showLineNumbers: <?= $setting_numbering ?>,
 			showGutter: true,
 			scrollPastEnd: true,
-			fadeFoldWidgets: <?php echo $setting_numbering; ?>,
+			fadeFoldWidgets: <?= $setting_numbering ?>,
 			showPrintMargin: false,
 			highlightGutterLine: false,
 			useSoftTabs: false,
@@ -402,6 +402,11 @@ while (ob_get_level() > 0) {
 	}
 
     function save() {
+		let file = getActiveFile();
+		if (file.originalContent === editor.getSession().getValue()) {
+			status_message.innerHTML = "File Not Modified.";
+			return;
+		}
         let formData = new FormData();
         formData.append('filepath', document.getElementById('filepath').value);
         formData.append('content', editor.getSession().getValue());
@@ -417,7 +422,9 @@ while (ob_get_level() > 0) {
 					file.originalContent = editor.getSession().getValue();
 					file.session.message = "File Saved.";
 					status_message.innerHTML = "File Saved.";
-					file.session.tab.innerText = file.fileName;
+					if (file.session.tab.innerText.charAt(0) === "*") {
+						file.session.tab.innerText = file.session.tab.innerText.slice(1);
+					}
 				}
             } else {
                 alert("<?php echo $text['message-problem']; ?>");
@@ -524,18 +531,23 @@ while (ob_get_level() > 0) {
 		updateStatusBar();
     }
 
-	function updateStatusBar(delta) {
+	function updateStatusBar() {
 		const file = getActiveFile();
 		if (file) {
 			if (file.originalContent !== editor.getSession().getValue()) {
 				file.session.message = "Modified";
 				status_message.innerHTML = "Modified";
 				status_filepath.innerHTML = file.filePath;
-				file.session.tab.innerText = "*" + file.fileName;
+				if (file.session.tab.innerText.charAt(0) !== "*") {
+					file.session.tab.innerText = "*" + file.session.tab.innerText;
+				}
 			} else {
 				status_message.innerHTML = "Read " + file.originalContent.length + " bytes";
 				status_filepath.innerHTML = file.filePath;
-				file.session.tab.innerText = file.fileName;
+				file.session.tab.title = file.fileName;
+				if (file.session.tab.innerText.charAt(0) === "*") {
+					file.session.tab.innerText = file.session.tab.innerText.slice(1);
+				}
 			}
 		} else {
 			status_message.innerHTML = "";
