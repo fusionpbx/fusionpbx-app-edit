@@ -651,10 +651,15 @@ while (ob_get_level() > 0) {
                     });
                 }
             }
+
 			// Map the custom completion to the editor
             const customCompleter = {
                 getCompletions: function(editor, session, pos, prefix, callback) {
+					// Use the current file name as the class name to capture "$this->" methods
+					let currentClassName = document.getElementById('filepath').value.split('/').pop().slice(0, -4).toLowerCase();
+					// Get the line to test
                     let line = session.getLine(pos.row).substring(0, pos.column);
+					/// Initialize the array
                     let filtered = [];
                     const staticMatch = line.match(/(?:\$)?(\w+)\s*::\s*$/);
                     const instanceMatch = line.match(/(?:\$)?(\w+)\s*->\s*$/);
@@ -662,7 +667,10 @@ while (ob_get_level() > 0) {
                         const targetClass = staticMatch[1].toLowerCase();
                         filtered = completions.filter(item => item.value.toLowerCase().startsWith(targetClass + "::"));
                     } else if (instanceMatch) {
-                        const targetClass = instanceMatch[1].toLowerCase();
+                        let targetClass = instanceMatch[1].toLowerCase();
+						if (targetClass === "this") {
+							targetClass = currentClassName;
+						}
                         filtered = completions.filter(item => {
                             let val = item.value.toLowerCase();
                             return val.startsWith(targetClass + "->") || val.startsWith(targetClass + "::");
