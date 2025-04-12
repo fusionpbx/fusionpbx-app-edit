@@ -23,864 +23,683 @@
   Contributor(s):
   Mark J Crane <markjcrane@fusionpbx.com>
   James Rose <james.o.rose@gmail.com>
- */
+*/
 
-//includes files
+// Include required files and check access
 require_once dirname(__DIR__, 2) . "/resources/require.php";
 require_once "resources/check_auth.php";
 
-//check permissions
-if (permission_exists('edit_view')) {
-	//access granted
-} else {
-	echo "access denied";
-	exit;
+if (!permission_exists('edit_view')) {
+    echo "access denied";
+    exit;
 }
 
-//add multi-lingual support
-$language = new text;
+$domain_uuid = $_SESSION['domain_uuid'] ?? '';
+$user_uuid = $_SESSION['user_uuid'] ?? '';
+
+// Add multi-lingual support
+$language = new text();
 $text = $language->get();
 
-//set the directory title and mode
+// Set the directory title and mode based on the query parameter
 switch ($_GET["dir"]) {
-	case 'xml':
-		$title = 'XML';
-		$mode = 'xml';
-		$dir = 'xml';
-		break;
-	case 'provision':
-		$title = 'Provision';
-		$mode = 'xml';
-		$dir = 'provision';
-		break;
-	case 'php':
-		$title = 'PHP';
-		$mode = 'php';
-		$dir = 'php';
-		break;
-	case 'scripts':
-		$title = 'Scripts';
-		$mode = 'lua';
-		$dir = 'scripts';
-		break;
-	case 'grammar':
-		$title = 'Grammar';
-		$mode = 'xml';
-		$dir = 'grammar';
-		break;
-	default:
-		$mode = 'text';
-		$dir = '';
+    case 'xml':
+        $title = 'XML';
+        $mode = 'xml';
+        $dir = 'xml';
+        break;
+    case 'provision':
+        $title = 'Provision';
+        $mode = 'xml';
+        $dir = 'provision';
+        break;
+    case 'php':
+        $title = 'PHP';
+        $mode = 'php';
+        $dir = 'php';
+        break;
+    case 'scripts':
+        $title = 'Scripts';
+        $mode = 'lua';
+        $dir = 'scripts';
+        break;
+    case 'grammar':
+        $title = 'Grammar';
+        $mode = 'xml';
+        $dir = 'grammar';
+        break;
+    default:
+        $mode = 'text';
+        $dir = '';
 }
 
-//save the sanitized value
+// Save the sanitized directory
 $_SESSION['app']['edit']['dir'] = $dir;
 
-//load editor preferences/defaults
+// Ensure the database and settings objects are created
+global $database;
+if (empty($database) || !($database instanceof database)) {
+    $database = database::new();
+}
+if (empty($settings) || !($settings instanceof settings)) {
+    $settings = new settings(['database' => $database, 'domain_uuid' => $domain_uuid, 'user_uuid' => $user_uuid]);
+}
+
+// Load editor preferences/defaults
 $setting_size = $settings->get('editor', 'font_size', '12px');
 $setting_theme = $settings->get('editor', 'theme', 'cobalt');
 $setting_invisibles = $settings->get('editor', 'invisibles', 'false');
 $setting_indenting = $settings->get('editor', 'indent_guides', 'false');
 $setting_numbering = $settings->get('editor', 'line_numbers', 'true');
 
-//get and then set the favicon
+// Get the favicon
 $favicon = $settings->get('theme', 'favicon', PROJECT_ROOT . '/themes/default/favicon.ico');
 
-//create a token
+// Create a token for file saving
 $key_name = '/app/edit/' . $mode;
 $_SESSION['keys'][$key_name] = bin2hex(random_bytes(32));
 $_SESSION['token'] = hash_hmac('sha256', $key_name, $_SESSION['keys'][$key_name]);
 
-//The buffer must be empty
-while (ob_get_level() > 0)
-	ob_get_clean();
-?><!doctype html>
+// Make sure the output buffer is empty
+while (ob_get_level() > 0) {
+    ob_get_clean();
+}
+?>
+<!doctype html>
 <html>
-	<head>
-		<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
-		<title><?php echo $title; ?></title>
-		<link rel="icon" type="image/x-icon" href="<?php echo $favicon; ?>">
-		<link rel='stylesheet' type='text/css' href='<?php echo PROJECT_PATH; ?>/resources/fontawesome/css/all.min.css.php'>
-		<script language="JavaScript" type="text/javascript" src="<?php echo PROJECT_PATH; ?>/resources/jquery/jquery-3.6.1.min.js"></script>
-		<script language="JavaScript" type="text/javascript">
-			function submit_check() {
-				if (document.getElementById('filepath').value != '') {
-					document.getElementById('editor_source').value = editor.getSession().getValue();
-					return true;
+<head>
+    <meta charset="UTF-8">
+    <title><?php echo $title; ?></title>
+    <link rel="icon" type="image/x-icon" href="<?php echo $favicon; ?>">
+    <link rel="stylesheet" href="<?php echo PROJECT_PATH; ?>/resources/fontawesome/css/all.min.css.php">
+    <script src="<?php echo PROJECT_PATH; ?>/resources/jquery/jquery-3.6.1.min.js"></script>
+    <!-- Ace Editor -->
+    <script src="<?= PROJECT_PATH ?>/resources/ace/ace.js" charset="utf-8"></script>
+    <script src="<?= PROJECT_PATH ?>/resources/ace/ext-inline_autocomplete.js"></script>
+    <style>
+        /* Basic reset */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+        /* Main frame layout */
+        #frame {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+        /* Left Sidebar */
+        #float_sidebar {
+            width: 20%;
+            display: flex;
+            flex-direction: column;
+            background: #f8f8f8;
+            border-right: 1px solid #ccc;
+        }
+        #float_sidebar > div {
+            flex: 1;
+            overflow: auto;
+            padding: 10px;
+        }
+        #file_list {
+            border-bottom: 1px solid #ccc;
+        }
+        /* Main Content */
+        #float_content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        /* Editor Header: tabs and toolbar */
+        #editor-header {
+            height: 40px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        #fileTabs {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        #fileTabs li {
+            padding: 5px 10px;
+            margin-right: 2px;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            cursor: pointer;
+        }
+        #fileTabs li.active {
+            background: #fff;
+            border-top: 2px solid #007acc;
+            font-weight: bold;
+        }
+        #toolbar {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+        }
+        .ace_control {
+            cursor: pointer;
+            margin-right: 10px;
+            opacity: 0.7;
+        }
+        .ace_control:hover {
+            opacity: 1;
+        }
+        /* Editor Body */
+        #editor-body {
+            flex: 1;
+        }
+        #editor {
+            width: 100%;
+            height: 100%;
+        }
+        /* Status Bar */
+		#editor-status {
+			display: flex;
+			align-items: center;
+			/* Add right padding to keep content away from the screen edge */
+			padding-right: 15px;
+			font-size: 14pt;
+		}
+
+		/* Fixed widths for the left sections (adjust as needed) */
+		#status-message {
+			width: 200px;
+		}
+
+		#status-filepath {
+			width: 800px;
+		}
+
+		/* Style the cursor status group */
+		#cursor-status-group {
+			margin-left: auto;  /* Push this group to the far right */
+/*			width: 200px;        Set a fixed width to prevent resizing */
+			border-left: 2px solid #ccc; /* Vertical separator on the left */
+			padding-left: 2px;
+			display: flex;
+/*			justify-content: flex-end;*/
+			gap: 2px;
+			box-sizing: border-box;
+		}
+
+		/* Give fixed widths to the individual cursor spans so that changes in text don't affect layout */
+		#status-cursor-line,
+		#status-cursor-column {
+			width: 150px;  /* Adjust widths as needed */
+			/*text-align: right;*/
+		}
+    </style>
+</head>
+<body>
+<div id="frame">
+    <!-- Left Sidebar: File List (upper) and Clips (lower) -->
+    <div id="float_sidebar">
+        <div id="file_list">Loading file list...</div>
+        <div id="clip_list">Loading clips...</div>
+    </div>
+    <!-- Main Content -->
+    <div id="float_content">
+        <!-- Editor Header: File Tabs + Toolbar -->
+        <div id="editor-header">
+            <ul id="fileTabs"></ul>
+            <div id="toolbar">
+                <i class="fas fa-save ace_control" title="<?php echo $text['label-save_changes']; ?>" onclick="save();"></i>
+                <i class="fas fa-search ace_control" title="<?php echo $text['label-find_replace']; ?>" onclick="editor.execCommand('replace');"></i>
+                <i class="fas fa-chevron-down ace_control" title="<?php echo $text['label-go_to_line']; ?>" onclick="editor.execCommand('gotoline');"></i>
+                <!-- Editor mode, size, and theme selectors -->
+                <select id="mode" onchange="editor.getSession().setMode('ace/mode/' + this.value);">
+                    <?php
+                    $modes = [
+                        'php' => 'PHP',
+                        'css' => 'CSS',
+                        'html' => 'HTML',
+                        'javascript' => 'JS',
+                        'json' => 'JSON',
+                        'ini' => 'Conf',
+                        'lua' => 'Lua',
+                        'text' => 'Text',
+                        'xml' => 'XML',
+                        'sql' => 'SQL',
+                        'sh' => 'SH',
+                        'smarty' => 'Smarty',
+                        'svg' => 'SVG',
+                        'makefile' => 'Makefile',
+                        'c_cpp' => 'C/CPP',
+                        'pgsql' => 'PGSQL'
+                    ];
+                    foreach ($modes as $value => $label) {
+                        $selected = ($value == $mode) ? 'selected' : '';
+                        echo "<option value='{$value}' {$selected}>{$label}</option>";
+                    }
+                    ?>
+                </select>
+                <select id="size" onchange="document.getElementById('editor').style.fontSize = this.value;">
+                    <?php
+                    $sizes = explode(',', '9px,10px,11px,12px,14px,16px,18px,20px');
+                    foreach ($sizes as $size) {
+                        $selected = ($size == $setting_size) ? 'selected' : '';
+                        echo "<option value='{$size}' {$selected}>{$size}</option>";
+                    }
+                    ?>
+                </select>
+                <select id="theme" onchange="editor.setTheme('ace/theme/' + this.value);">
+                    <?php
+                    $themes = [
+                        'chrome' => 'Chrome',
+                        'clouds' => 'Clouds',
+                        'crimson_editor' => 'Crimson Editor',
+                        'dawn' => 'Dawn',
+                        'dreamweaver' => 'Dreamweaver',
+                        'eclipse' => 'Eclipse',
+                        'github' => 'GitHub',
+                        'iplastic' => 'IPlastic',
+                        'solarized_light' => 'Solarized Light',
+                        'textmate' => 'TextMate',
+                        'tomorrow' => 'Tomorrow',
+                        'xcode' => 'XCode',
+                        'ambiance' => 'Ambiance',
+                        'chaos' => 'Chaos',
+                        'clouds_midnight' => 'Clouds Midnight',
+                        'cobalt' => 'Cobalt',
+                        'idle_fingers' => 'idle Fingers',
+                        'kr_theme' => 'krTheme',
+                        'merbivore' => 'Merbivore',
+                        'monokai' => 'Monokai',
+                        'pastel_on_dark' => 'Pastel on dark',
+                        'solarized_dark' => 'Solarized Dark',
+                        'terminal' => 'Terminal',
+                        'tomorrow_night' => 'Tomorrow Night',
+                        'tomorrow_night_blue' => 'Tomorrow Night Blue',
+                        'tomorrow_night_bright' => 'Tomorrow Night Bright',
+                        'tomorrow_night_eighties' => 'Tomorrow Night 80s',
+                        'twilight' => 'Twilight',
+                        'vibrant_ink' => 'Vibrant Ink'
+                    ];
+                    foreach ($themes as $value => $label) {
+                        $selected = (strtolower($label) == strtolower($setting_theme)) ? 'selected' : '';
+                        echo "<option value='{$value}' {$selected}>{$label}</option>";
+                    }
+                    ?>
+                </select>
+            </div>
+        </div>
+        <!-- Editor Body -->
+        <div id="editor-body">
+            <div id="editor"></div>
+        </div>
+        <!-- Editor Status Bar -->
+        <div id="editor-status">
+            <span id="status-message">&nbsp;</span>
+			<span id="status-filepath">New File</span>
+			<div id="cursor-status-group">
+				<span id="status-cursor-line" style="padding-left: 5px;">Line:</span>
+				<span id="status-cursor-column">Column:</span>
+			</div>
+        </div>
+        <!-- Hidden Form for Saving (if needed) -->
+        <form id="frm_edit" method="post" action="file_save.php" onsubmit="return submit_check();" style="display:none;">
+            <textarea name="content" id="editor_source"></textarea>
+            <input type="hidden" name="filepath" id="filepath" value="">
+            <input type="hidden" name="token" id="token" value="<?= $_SESSION['token'] ?>">
+            <input type="hidden" name="mode" value="<?= $mode ?>">
+        </form>
+    </div>
+</div>
+
+<script>
+	// Initialize Ace Editor
+	var editor = ace.edit("editor");
+
+	// Status Bar
+	const status_message = document.getElementById('status-message');
+	const status_filepath = document.getElementById('status-filepath');
+
+	// Multiple file handler
+	var loadedFiles = [];
+
+	// Track modified files
+	let isModified = false;
+
+    // Basic functions for form submission and saving
+    function submit_check() {
+        if (document.getElementById('filepath').value !== '') {
+            document.getElementById('editor_source').value = editor.getSession().getValue();
+            return true;
+        }
+        editor.focus();
+        return false;
+    }
+
+	function getOptions() {
+		// Set Editor Options
+		return {
+			mode: 'ace/mode/<?php echo $mode; ?>',
+			theme: 'ace/theme/' + document.getElementById('theme').value,
+			selectionStyle: 'text',
+			cursorStyle: 'smooth',
+			showInvisibles: <?php echo $setting_invisibles; ?>,
+			displayIndentGuides: <?php echo $setting_indenting; ?>,
+			showLineNumbers: <?php echo $setting_numbering; ?>,
+			showGutter: true,
+			scrollPastEnd: true,
+			fadeFoldWidgets: <?php echo $setting_numbering; ?>,
+			showPrintMargin: false,
+			highlightGutterLine: false,
+			useSoftTabs: false,
+			enableBasicAutocompletion: true,
+			enableLiveAutocompletion: <?php echo ($mode === 'php') ? 'true' : 'false'; ?>,
+			enableSnippets: true
+		};
+	}
+
+    function save() {
+        let formData = new FormData();
+        formData.append('filepath', document.getElementById('filepath').value);
+        formData.append('content', editor.getSession().getValue());
+        formData.append('token', document.getElementById('token').value);
+        formData.append('mode', "<?php echo $mode; ?>");
+
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', 'file_save.php', true);
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+				let file = getActiveFile();
+				if (file) {
+					file.originalContent = editor.getSession().getValue();
+					file.session.message = "File Saved.";
+					status_message.innerHTML = "File Saved.";
+					file.session.tab.innerText = file.fileName;
 				}
-				focus_editor();
-				return false;
-			}
+            } else {
+                alert("<?php echo $text['message-problem']; ?>");
+            }
+        };
+        xhr.send(formData);
+    }
 
-			function toggle_option(opt) {
-				switch (opt) {
-					case 'numbering':
-						toggle_option_do('showLineNumbers');
-						toggle_option_do('fadeFoldWidgets');
-						break;
-					case 'invisibles':
-						toggle_option_do('showInvisibles');
-						break;
-					case 'indenting':
-						toggle_option_do('displayIndentGuides');
-						break;
-				}
-				focus_editor();
-			}
+    // Sidebar: Load File List and Clip List
+    async function loadFileList() {
+        try {
+            const response = await fetch('file_list.php');
+            if (!response.ok) throw new Error('Network response not ok');
+            const html = await response.text();
+            document.getElementById('file_list').innerHTML = html;
+        } catch (error) {
+            console.error('Error fetching file list:', error);
+        }
+    }
+    async function loadClipList() {
+        try {
+            const response = await fetch('clip_list.php');
+            if (!response.ok) throw new Error('Network response not ok');
+            const html = await response.text();
+            document.getElementById('clip_list').innerHTML = html;
+        } catch (error) {
+            console.error('Error fetching clip list:', error);
+        }
+    }
 
-			function toggle_option_do(opt_name) {
-				var opt_val = editor.getOption(opt_name);
-				editor.setOption(opt_name, ((opt_val) ? false : true));
-			}
+	// Helper function to return the path of the active file
+	function getActiveFile() {
+		const currentPath = document.getElementById('filepath').value;
+		return loadedFiles.find(file => file.filePath === currentPath);
+	}
 
-			function toggle_sidebar() {
-				var td_sidebar = document.getElementById('sidebar');
-				if (td_sidebar.style.display == '') {
-					document.getElementById('td_save').style.paddingLeft = '12px';
-					td_sidebar.style.display = 'none';
-				} else {
-					document.getElementById('td_save').style.paddingLeft = '0';
-					td_sidebar.style.display = '';
-				}
-				focus_editor();
-			}
+    // File Tabs Management
+    function addTab(filePath, content) {
+        var fileName = filePath.split('/').pop();
+        // If the file is already loaded, activate it.
+        if (loadedFiles.some(file => file.filePath === filePath)) {
+            activateTab(filePath);
+            return;
+        }
+		var session = ace.createEditSession(content);
+		session.setMode("ace/mode/<?= $mode ?>");
 
-			function insert_clip(before, after) {
-				var selected_text = editor.session.getTextRange(editor.getSelectionRange());
-				editor.insert(before + selected_text + after);
-				focus_editor();
-			}
+		//set the undo state so we know where the file is unchanged
+		//editor.setSession(session);
+		session.getUndoManager().markClean();
 
-			function focus_editor() {
-				editor.focus();
-			}
+		//track by the filePath
+		session.id = filePath;
+		session.message = "Read " + content.length + " bytes";
 
-			function http_request(url, form_data) {
-				var http = new XMLHttpRequest();
-				http.open('POST', url, true);
-				//http.onload = function(e) { ... };
-				http.onload = function (e) {
-					if (this.status == 200) {
-						//data sent successfully
-						alert(this.responseText);
+		loadedFiles.push({filePath: filePath, fileName: fileName, session: session});
+        var tab = document.createElement('li');
+        tab.setAttribute('data-file', filePath);
+        tab.innerText = fileName;
+        tab.onclick = () => activateTab(filePath);
+
+		//save the tab and filename
+		session.tab = tab;
+		session.fileName = fileName;
+
+        // Close button for the tab.
+        var closeBtn = document.createElement('span');
+        closeBtn.innerText = " x";
+        closeBtn.style.marginLeft = "5px";
+        closeBtn.style.cursor = "pointer";
+        closeBtn.onclick = function (e) {
+            e.stopPropagation();
+            closeTab(filePath);
+        };
+        tab.appendChild(closeBtn);
+        document.getElementById('fileTabs').appendChild(tab);
+		activateTab(filePath);
+		//var file = loadedFiles.find(f => f.filePath === filePath);
+		//status_message.innerHTML = "Read " + file.content.length + " bytes";
+    }
+
+	function updateCursorStatus() {
+		const cursor = editor.selection.getCursor();
+		document.getElementById('status-cursor-line').innerText = "Line: " + (cursor.row + 1);
+		document.getElementById('status-cursor-column').innerText = "Column: " + (cursor.column + 1);
+	}
+
+	// Switch to another tab
+	function activateTab(filePath) {
+		document.querySelectorAll('#fileTabs li').forEach(tab => tab.classList.remove('active'));
+        var activeTab = document.querySelector('#fileTabs li[data-file="' + filePath + '"]');
+        if (activeTab) activeTab.classList.add('active');
+        var file = loadedFiles.find(f => f.filePath === filePath);
+        if (file) {
+			//switch the editor to the session
+			editor.setSession(file.session);
+
+			//add a listener
+			editor.getSession().on('change', function(delta) {
+				const file = getActiveFile();
+				if (file) {
+					if (editor.getSession().getUndoManager().isClean()) {
+						status_message.innerHTML = "";
+						status_filepath.innerHTML = "New File";
 					} else {
-						alert('<?php echo $text['message-problem']; ?>');
+						file.session.message = "Modified";
+						status_message.innerHTML = "Modified";
+						file.session.tab.innerText = "*" + file.fileName;
 					}
-				};
-				http.send(form_data);
-			}
-
-			function save() {
-				var form_data = new FormData();
-				form_data.append('filepath', document.getElementById('filepath').value);
-				form_data.append('content', editor.getSession().getValue());
-				form_data.append('token', document.getElementById('token').value);
-				form_data.append('mode', "<?php echo $mode; ?>");
-
-				http_request('file_save.php', form_data);
-			}
-		</script>
-		<style>
-			div#editor {
-				box-shadow: 0 5px 15px #333;
-			}
-
-			i.ace_control {
-				cursor: pointer;
-				margin-right: 5px;
-				opacity: 0.5;
-			}
-
-			i.ace_control:hover {
-				opacity: 1.0;
-			}
-
-			#float_sidebar {
-				position: relative;
-				top: 10px;
-				left: 10px;
-				width: 10vw;
-				height: 95%;
-				background-color: #fff;
-				border: 1px solid #ccc;
-				padding: 10px;
-				box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-				z-index: 1000;
-				cursor: move; /* Indicates draggable */
-			}
-			/* Common style for all resize handles */
-			.resize-handle {
-				position: absolute;
-				background: transparent;
-				/*background: rgba(0, 0, 0, 0.2);*/
-				z-index: 1001;
-			}
-			/* Edges */
-			.resize-handle.top {
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 5px;
-				cursor: ns-resize;
-			}
-			.resize-handle.right {
-				top: 0;
-				right: 0;
-				width: 5px;
-				height: 100%;
-				cursor: ew-resize;
-			}
-			.resize-handle.bottom {
-				bottom: 0;
-				left: 0;
-				width: 100%;
-				height: 5px;
-				cursor: ns-resize;
-			}
-			.resize-handle.left {
-				top: 0;
-				left: 0;
-				width: 5px;
-				height: 100%;
-				cursor: ew-resize;
-			}
-			/* Corners */
-			.resize-handle.top-left     {
-				top: -5px;
-				left: -5px;
-				width: 10px;
-				height: 10px;
-				cursor: nwse-resize;
-			}
-			.resize-handle.top-right    {
-				top: -5px;
-				right: -5px;
-				width: 20px;
-				height: 10px;
-				cursor: nesw-resize;
-			}
-			.resize-handle.bottom-left  {
-				bottom: -5px;
-				left: -5px;
-				width: 10px;
-				height: 10px;
-				cursor: nesw-resize;
-			}
-			.resize-handle.bottom-right {
-				bottom: -5px;
-				right: -5px;
-				width: 10px;
-				height: 10px;
-				cursor: nwse-resize;
-			}
-			#float_content {
-				position: absolute;
-				resize: both;
-				overflow: hidden; /* No scroll bars - Ace has it's own */
-				top: 10px;
-				left: 12vw;
-				width: 86vw;
-				height: 95%;
-				background-color: #fff;
-				border: 1px solid #ccc;
-				padding: 10px;
-				box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-				z-index: 1000;
-				cursor: move; /* Indicates draggable */
-			}
-		</style>
-	</head>
-	<body style="padding: 0; margin: 0; overflow: hidden;">
-		<div id="frame" style="display: flex; height: 100vh; width: 100vw;">
-			<!-- Sidebar -->
-			<div id="float_sidebar" style="display: flex; flex-direction: column;">
-				<div id="file_list" style="border: none; height: 65%; width: 100%; overflow: auto;">
-					Loading...
-				</div>
-				<div id="clip_list" style="border: none; border-top: 1px solid #ccc; height: calc(35% - 1px); width: 100%; overflow: auto;">
-					Loading...
-				</div>
-				<div class="resize-handle top"></div>
-				<div class="resize-handle right"></div>
-				<div class="resize-handle bottom"></div>
-				<div class="resize-handle left"></div>
-				<div class="resize-handle top-left"></div>
-				<div class="resize-handle top-right"></div>
-				<div class="resize-handle bottom-left"></div>
-				<div class="resize-handle bottom-right"></div>
-			</div>
-
-			<!-- Main Content -->
-			<div id="float_content">
-				<div id="float_contentheader" style="align-content: center; background: #f0f0f0; padding: 5px; cursor: move;">&nbsp;</div>
-				<!-- Editor Controls -->
-				<form style="margin: 0;" name="frm_edit" id="frm_edit" method="post" action="file_save.php" onsubmit="return submit_check();">
-					<textarea name="content" id="editor_source" style="display: none;"></textarea>
-					<input type="hidden" name="filepath" id="filepath" value="">
-					<input type="hidden" name="token" id="token" value="<?php echo $_SESSION['token']; ?>">
-					<div id="editor-controls" style="display: flex; align-items: center; width: 100%; height: 30px;">
-						<div id="td_save" style="display: inline-flex; align-items: center;">
-							<i class="fas fa-save fa-lg ace_control" title="<?php echo $text['label-save_changes']; ?>" onclick="save();"></i>
-						</div>
-						<div style="flex: 1; padding: 0 15px 0 18px;">
-							<input id="current_file" type="text" style="height: 23px; width: 100%;">
-						</div>
-						<div style="width: 1px; height: 40px;"></div>
-						<div style="padding-left: 6px;">
-							<i class="fas fa-window-maximize fa-lg fa-rotate-270 ace_control" title="<?php echo $text['label-toggle_side_bar']; ?>" onclick="toggle_sidebar();"></i>
-						</div>
-						<div style="padding-left: 6px;">
-							<i class="fas fa-list-ul fa-lg ace_control" title="<?php echo $text['label-toggle_line_numbers']; ?>" onclick="toggle_option('numbering');"></i>
-						</div>
-						<div style="padding-left: 6px;">
-							<i class="fas fa-eye-slash fa-lg ace_control" title="<?php echo $text['label-toggle_invisibles']; ?>" onclick="toggle_option('invisibles');"></i>
-						</div>
-						<div style="padding-left: 6px;">
-							<i class="fas fa-indent fa-lg ace_control" title="<?php echo $text['label-toggle_indent_guides']; ?>" onclick="toggle_option('indenting');"></i>
-						</div>
-						<div style="padding-left: 6px;">
-							<i class="fas fa-search fa-lg ace_control" title="<?php echo $text['label-find_replace']; ?>" onclick="editor.execCommand('replace');"></i>
-						</div>
-						<div style="padding-left: 6px;">
-							<i class="fas fa-chevron-down fa-lg ace_control" title="<?php echo $text['label-go_to_line']; ?>" onclick="editor.execCommand('gotoline');"></i>
-						</div>
-						<div style="padding-left: 15px;">
-							<select id="mode" style="height: 23px; max-width: 70px;" onchange="editor.getSession().setMode('ace/mode/' + this.options[this.selectedIndex].value); focus_editor();">
-								<?php
-								$modes['php'] = 'PHP';
-								$modes['css'] = 'CSS';
-								$modes['html'] = 'HTML';
-								$modes['javascript'] = 'JS';
-								$modes['json'] = 'JSON';
-								$modes['ini'] = 'Conf';
-								$modes['lua'] = 'Lua';
-								$modes['text'] = 'Text';
-								$modes['xml'] = 'XML';
-								$modes['sql'] = 'SQL';
-								$modes['sh'] = 'SH';
-								$modes['smarty'] = 'Smarty';
-								$modes['svg'] = 'SVG';
-								$modes['makefile'] = 'Makefile';
-								$modes['c_cpp'] = 'C';
-								$modes['c_cpp'] = 'CPP';
-								$modes['pgsql'] = 'PGSQL';
-								foreach ($modes as $value => $label) {
-									$selected = ($value == $mode) ? 'selected' : null;
-									echo "<option value='" . $value . "' " . $selected . ">" . $label . "</option>\n";
-								}
-								?>
-							</select>
-						</div>
-						<div style="padding-left: 4px;">
-							<select id="size" style="height: 23px;" onchange="document.getElementById('editor').style.fontSize = this.options[this.selectedIndex].value; focus_editor();">
-							<?php
-							$sizes = explode(',', '9px,10px,11px,12px,14px,16px,18px,20px');
-							if (!in_array($setting_size, $sizes)) {
-								echo "<option value='" . $setting_size . "'>" . $setting_size . "</option>\n";
-								echo "<option value='' disabled='disabled'></option>\n";
-							}
-							foreach ($sizes as $size) {
-								$selected = ($size == $setting_size) ? 'selected' : null;
-								echo "<option value='" . $size . "' " . $selected . ">" . $size . "</option>\n";
-							}
-							?>
-							</select>
-						</div>
-						<div style="padding-left: 4px; padding-right: 4px;">
-							<select id="theme" style="height: 23px; max-width: 100px;" onchange="editor.setTheme('ace/theme/' + this.options[this.selectedIndex].value); focus_editor();">
-								<?php
-								$themes['Bright']['chrome'] = 'Chrome';
-								$themes['Bright']['clouds'] = 'Clouds';
-								$themes['Bright']['crimson_editor'] = 'Crimson Editor';
-								$themes['Bright']['dawn'] = 'Dawn';
-								$themes['Bright']['dreamweaver'] = 'Dreamweaver';
-								$themes['Bright']['eclipse'] = 'Eclipse';
-								$themes['Bright']['github'] = 'GitHub';
-								$themes['Bright']['iplastic'] = 'IPlastic';
-								$themes['Bright']['solarized_light'] = 'Solarized Light';
-								$themes['Bright']['textmate'] = 'TextMate';
-								$themes['Bright']['tomorrow'] = 'Tomorrow';
-								$themes['Bright']['xcode'] = 'XCode';
-								$themes['Bright']['kuroir'] = 'Kuroir';
-								$themes['Bright']['katzenmilch'] = 'KatzenMilch';
-								$themes['Bright']['sqlserver'] = 'SQL Server';
-								$themes['Dark']['ambiance'] = 'Ambiance';
-								$themes['Dark']['chaos'] = 'Chaos';
-								$themes['Dark']['clouds_midnight'] = 'Clouds Midnight';
-								$themes['Dark']['cobalt'] = 'Cobalt';
-								$themes['Dark']['idle_fingers'] = 'idle Fingers';
-								$themes['Dark']['kr_theme'] = 'krTheme';
-								$themes['Dark']['merbivore'] = 'Merbivore';
-								$themes['Dark']['merbivore_soft'] = 'Merbivore Soft';
-								$themes['Dark']['mono_industrial'] = 'Mono Industrial';
-								$themes['Dark']['monokai'] = 'Monokai';
-								$themes['Dark']['pastel_on_dark'] = 'Pastel on dark';
-								$themes['Dark']['solarized_dark'] = 'Solarized Dark';
-								$themes['Dark']['terminal'] = 'Terminal';
-								$themes['Dark']['tomorrow_night'] = 'Tomorrow Night';
-								$themes['Dark']['tomorrow_night_blue'] = 'Tomorrow Night Blue';
-								$themes['Dark']['tomorrow_night_bright'] = 'Tomorrow Night Bright';
-								$themes['Dark']['tomorrow_night_eighties'] = 'Tomorrow Night 80s';
-								$themes['Dark']['twilight'] = 'Twilight';
-								$themes['Dark']['vibrant_ink'] = 'Vibrant Ink';
-								foreach ($themes as $optgroup => $theme) {
-									echo "<optgroup label='" . $optgroup . "'>\n";
-									foreach ($theme as $value => $label) {
-										$selected = (strtolower($label) == strtolower($setting_theme)) ? 'selected' : null;
-										echo "<option value='" . $value . "' " . $selected . ">" . $label . "</option>\n";
-									}
-									echo "</optgroup>\n";
-								}
-								?>
-							</select>
-						</div>
-					</div>
-				</form>
-				<!-- Editor -->
-				<div id="editor" style="padding: 10px; text-align: left; width: calc(100% - 20px); height: calc(100% - 70px); font-size: 12px;"></div>
-				<div id="float_contentresize" class="resize_handle" style="position: absolute; bottom: 0; right: 0; width: 15px; height: 15px; background: #ccc; cursor: se-resize;"></div>
-				<!-- Add Resizing -->
-				<div class="resize-handle top"></div>
-				<div class="resize-handle right"></div>
-				<div class="resize-handle bottom"></div>
-				<div class="resize-handle left"></div>
-				<div class="resize-handle top-left"></div>
-				<div class="resize-handle top-right"></div>
-				<div class="resize-handle bottom-left"></div>
-				<div class="resize-handle bottom-right"></div>
-			</div>
-		</div>
-
-		<script src="<?php echo PROJECT_PATH; ?>/resources/ace/ace.js" charset="utf-8"></script>
-		<script src="<?php echo PROJECT_PATH; ?>/resources/ace/ext-inline_autocomplete.js"></script>
-		<script>
-			// Load ACE extensions
-			ace.require("ace/ext/language_tools");
-
-			// Initialize ACE Editor
-			var editor = ace.edit("editor");
-			editor.setOptions({
-				mode: 'ace/mode/<?= $mode ?>',
-				theme: 'ace/theme/' + document.getElementById('theme').options[document.getElementById('theme').selectedIndex].value,
-				selectionStyle: 'text',
-				cursorStyle: 'smooth',
-				showInvisibles: <?= $setting_invisibles ?>,
-				displayIndentGuides: <?= $setting_indenting ?>,
-				showLineNumbers: <?= $setting_numbering ?>,
-				showGutter: true,
-				scrollPastEnd: true,
-				fadeFoldWidgets: <?= $setting_numbering ?>,
-				showPrintMargin: false,
-				highlightGutterLine: false,
-				useSoftTabs: false,
-				enableBasicAutocompletion: true,
-				enableLiveAutocompletion: <?php echo ($mode === 'php') ? 'true' : 'false'; ?>,
-				enableSnippets: <?php echo 'true' ?>
-			});
-
-			// Prevent form submission with Enter key
-			<?php key_press('enter', 'down', '#current_file', null, null, 'return false;', false); ?>
-
-			// Save file with Ctrl+S
-			<?php key_press('ctrl+s', 'down', 'window', null, null, "save(); return false;", false); ?>
-
-			// Open file manager/clip library pane with Ctrl+Q
-			<?php key_press('ctrl+q', 'down', 'window', null, null, 'toggle_sidebar(); focus_editor(); return false;', false); ?>
-
-			// Remove unwanted shortcuts
-			editor.commands.bindKey("Ctrl-T", null); // Disable new browser tab shortcut
-
-			// Levenshtein distance algorithm
-			function levenshteinDistance(a, b) {
-				let m = a.length, n = b.length;
-				let dp = [];
-				for (let i = 0; i <= m; i++) {
-					dp[i] = [i];
-				}
-				for (let j = 0; j <= n; j++) {
-					dp[0][j] = j;
-				}
-				for (let i = 1; i <= m; i++) {
-					for (let j = 1; j <= n; j++) {
-						if (a[i - 1] === b[j - 1]) {
-							dp[i][j] = dp[i - 1][j - 1];
-						} else {
-							dp[i][j] = Math.min(
-									dp[i - 1][j] + 1, // deletion
-									dp[i][j - 1] + 1, // insertion
-									dp[i - 1][j - 1] + 1 // substitution
-									);
-						}
-					}
-				}
-				return dp[m][n];
-			}
-
-			// Example function to find the closest matching class key
-			function findClosestMatch(refName, phpMethods) {
-				let bestMatch = null;
-				let bestDistance = Infinity;
-				let lowerRef = refName.toLowerCase();
-
-				// Loop through all classes in phpMethods
-				for (let key in phpMethods) {
-					// Assume the simple class name is the last segment after a backslash
-					let parts = key.split("\\");
-					let simpleName = parts[parts.length - 1].toLowerCase();
-					let distance = levenshteinDistance(lowerRef, simpleName);
-					if (distance < bestDistance) {
-						bestDistance = distance;
-						bestMatch = key;
-					}
-				}
-				return bestMatch;
-			}
-
-			// Function to fetch PHP class methods using fetch() with promises
-			async function fetch_php_methods() {
-				try {
-					let response = await fetch('/app/edit/resources/get_php_methods.php');
-					if (!response.ok)
-						throw new Error("Failed to load PHP methods.");
-					return await response.json();
-				} catch (error) {
-					console.error("Error fetching PHP methods:", error);
-					return {}; // Return empty object on failure
-				}
-			}
-
-			// Initialize ACE auto-completion after fetching PHP methods
-			async function init_ace_completion() {
-				const php_methods = await fetch_php_methods();
-
-				// Custom completer for PHP class methods
-				var php_class_completer = {
-					getCompletions: function (editor, session, pos, prefix, callback) {
-
-						// Define current_class_name by extracting the basename of the current file without extension.
-						var current_file_path = document.getElementById('current_file').value;
-						var current_file_name = current_file_path.split('/').pop();
-
-						// Remove the extension (everything after the last dot)
-						var current_class_name = current_file_name.replace(/\.[^/.]+$/, "");
-
-						// Get the current line text
-						var line = session.getLine(pos.row);
-
-						// Use regex to detect object (->) or static (::) access.
-						// This regex captures either "$this" or any other word.
-						const object_match = line.match(/(\$this|\w+)\s*->\s*\w*$/);
-						const static_match = line.match(/(self|static|\w+)::\w*$/);
-
-						// Extract the referenced name; if it's "$this", use the current_class_name.
-						var ref_name = object_match ? object_match[1] : (static_match ? static_match[1] : null);
-						if (ref_name === '$this' | ref_name === 'self' | ref_name === 'static') {
-							ref_name = current_class_name;
-						}
-
-						// If not a class, maybe a user function; use the prefix.
-						if (prefix.length > 0)
-							ref_name = prefix;
-
-						if (!ref_name)
-							return callback(null, []);
-
-						// Find the closest matching class using fuzzy matching.
-						var matched_class = findClosestMatch(ref_name, php_methods);
-						if (!matched_class)
-							return callback(null, []);
-
-						// Map the methods of the matched class into completions.
-						var completions = php_methods[matched_class].map(function (method) {
-							// If static syntax is used but the method is not static, skip it.
-							if (static_match !== null && !method.static) {
-								return {};
-							}
-
-							// Map the item to the documentation
-							var item = {
-								caption: method.name + method.params,
-								snippet: method.name + method.params.replace(/\$/g, "\\$"),
-								meta: method.meta,
-								docHTML: method.doc ? method.doc : "No Documentation"
-							};
-
-							// TODO: fix italics
-							// Use italics in pop-up for static methods
-							if (method.static) {
-								item.className = "ace_static_method";
-							}
-
-							//return the mapped json object
-							return item;
-						});
-
-						callback(null, completions);
-					}
-				};
-
-				// Initialize ACE Editor
-				ace.require("ace/ext/language_tools");
-
-				// Replace the current list of completions with our custom one so we don't have every single word in the document listed as a completion option
-				editor.completers = [php_class_completer];
-
-				// Ensure font size is set
-				document.getElementById('editor').style.fontSize = '<?= $setting_size ?>';
-				focus_editor();
-			}
-
-			if (<?php echo ($mode === 'php') ? 'true' : 'false'; ?>) {
-				// Run auto-completion setup
-				init_ace_completion();
-			}
-		</script>
-	</body>
-	<script>
-		fetch('clip_list.php')
-				.then(response => {
-					if (!response.ok) {
-						throw new Error('Network response was not ok');
-					}
-					return response.text();
-				})
-				.then(html => {
-					document.getElementById('clip_list').innerHTML = html;
-				})
-				.catch(error => {
-					console.error('Error fetching clip_list:', error);
-				});
-
-		async function loadFileList() {
-			try {
-				const response = await fetch('file_list.php');
-				if (!response.ok) {
-					throw new Error('Network response not okay');
-				}
-				const html = await response.text();
-				document.getElementById('file_list').innerHTML = html;
-			} catch (error) {
-				console.error('Error fetching files:', error);
-			}
-		}
-
-		function makeRequest(url, strpost) {
-			var http_request = false;
-
-			if (window.XMLHttpRequest) { // Mozilla, Safari, ...
-				http_request = new XMLHttpRequest();
-				if (http_request.overrideMimeType) {
-					http_request.overrideMimeType('text/xml');
-					// See note below about this line
-				}
-			} else if (window.ActiveXObject) { // IE
-				try {
-					http_request = new ActiveXObject("Msxml2.XMLHTTP");
-				} catch (e) {
-					try {
-						http_request = new ActiveXObject("Microsoft.XMLHTTP");
-					} catch (e) {
-					}
-				}
-			}
-
-			if (!http_request) {
-				alert('<?= $text['message-give-up'] ?>');
-				return false;
-			}
-			http_request.onreadystatechange = function () {
-				returnContent(http_request);
-			};
-			if (http_request.overrideMimeType) {
-				http_request.overrideMimeType('text/html');
-			}
-			http_request.open('POST', url, true);
-
-
-			if (strpost.length == 0) {
-				//http_request.send(null);
-				http_request.send('name=value&foo=bar');
-			} else {
-				http_request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-				http_request.send(strpost);
-			}
-
-		}
-
-		function returnContent(http_request) {
-
-			if (http_request.readyState === 4) {
-				if (http_request.status === 200) {
-					document.getElementById('editor_source').value = http_request.responseText;
-					editor.getSession().setValue(document.getElementById('editor_source').value);
-					editor.gotoLine(1);
-					editor.scrollToLine(1, true, true, function () {});
-					editor.focus();
+					//updateCursorStatus();
 				} else {
-					alert('<?= $text['message-problem'] ?>');
+					status_message.innerHTML = "";
+					status_filepath.innerHTML = "New File";
 				}
-			}
-
-		}
-		// ---------------------------------------------
-		// --- http://www.codeproject.com/jscript/dhtml_treeview.asp
-		// --- Name:    Easy DHTML Treeview           --
-		// --- Author:  D.D. de Kerf                  --
-		// --- Version: 0.2          Date: 13-6-2001  --
-		// ---------------------------------------------
-		function Toggle(node) {
-			// Unfold the branch if it isn't visible
-			if (node.nextSibling.style.display == 'none') {
-				node.nextSibling.style.display = 'block';
-			}
-			// Collapse the branch if it IS visible
-			else {
-				node.nextSibling.style.display = 'none';
-			}
-		}
-
-		// Load files from server
-		loadFileList();
-
-		// Make the element draggable and resizable.
-		dragElement(document.getElementById('float_sidebar'));
-		dragElement(document.getElementById('float_content'));
-
-		// Add resize functionality for all handles.
-		makeResizable(document.getElementById('float_sidebar'));
-		makeResizable(document.getElementById('float_content'));
-
-		// Drag Elements
-		function dragElement(elmnt) {
-			var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-
-			// If a header is present, use it as the drag handle.
-			var header = document.getElementById(elmnt.id + "header");
-			if (header) {
-				header.onmousedown = dragMouseDown;
-			} else {
-				// Otherwise, allow dragging from anywhere in the element.
-				elmnt.onmousedown = dragMouseDown;
-			}
-
-			// Attach the resize handler to the resize handle if it exists.
-			var resizeHandle = document.getElementById(elmnt.id + "resize");
-			if (resizeHandle) {
-				resizeHandle.onmousedown = resizeMouseDown;
-			}
-
-			function dragMouseDown(e) {
-				e = e || window.event;
-				// If the click target is the resize handle, ignore dragging.
-				if (e.target && e.target.classList && e.target.classList.contains("resize_handle")) {
-					return;
-				}
-				e.preventDefault();
-				// Record the initial cursor position.
-				pos3 = e.clientX;
-				pos4 = e.clientY;
-				document.onmouseup = closeDragElement;
-				document.onmousemove = elementDrag;
-			}
-
-			function elementDrag(e) {
-				e = e || window.event;
-				e.preventDefault();
-				// Calculate the new cursor position.
-				pos1 = pos3 - e.clientX;
-				pos2 = pos4 - e.clientY;
-				pos3 = e.clientX;
-				pos4 = e.clientY;
-				// Set the element's new position.
-				elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-				elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-			}
-
-			function closeDragElement() {
-				// Stop moving when mouse button is released.
-				document.onmouseup = null;
-				document.onmousemove = null;
-			}
-
-			function resizeMouseDown(e) {
-				e = e || window.event;
-				e.preventDefault();
-				// Record initial cursor position.
-				pos3 = e.clientX;
-				pos4 = e.clientY;
-				document.onmouseup = closeResizeElement;
-				document.onmousemove = elementResize;
-			}
-
-			function elementResize(e) {
-				e = e || window.event;
-				e.preventDefault();
-				// Calculate the change in mouse position.
-				var dx = e.clientX - pos3;
-				var dy = e.clientY - pos4;
-				pos3 = e.clientX;
-				pos4 = e.clientY;
-				// Adjust the element's dimensions.
-				elmnt.style.width = (elmnt.offsetWidth + dx) + "px";
-				elmnt.style.height = (elmnt.offsetHeight + dy) + "px";
-			}
-
-			function closeResizeElement() {
-				document.onmouseup = null;
-				document.onmousemove = null;
-			}
-		}
-
-		// Resize
-		function makeResizable(elmnt) {
-			var handles = elmnt.querySelectorAll('.resize-handle');
-			handles.forEach(function (handle) {
-				handle.onmousedown = initResize;
 			});
 
-			function initResize(e) {
-				e.stopPropagation(); // Prevent dragging while resizing.
-				e.preventDefault();
-				// Determine the handle's position (class name)
-				var handleClass = e.target.classList[1]; // Second class, e.g., "top", "bottom-right", etc.
-				// Record initial positions and dimensions
-				var startX = e.clientX;
-				var startY = e.clientY;
-				var startWidth = parseInt(document.defaultView.getComputedStyle(elmnt).width, 10);
-				var startHeight = parseInt(document.defaultView.getComputedStyle(elmnt).height, 10);
-				var startTop = elmnt.offsetTop;
-				var startLeft = elmnt.offsetLeft;
+			//add a cursor position listener
+			editor.selection.on('changeCursor', updateCursorStatus);
 
-				document.documentElement.addEventListener('mousemove', doResize, false);
-				document.documentElement.addEventListener('mouseup', stopResize, false);
+			//set filepath
+            document.getElementById('filepath').value = file.filePath;
 
-				function doResize(e) {
-					var dx = e.clientX - startX;
-					var dy = e.clientY - startY;
-
-					// For each handle, update element's dimensions and/or position.
-					if (handleClass.indexOf('right') > -1) {
-						elmnt.style.width = (startWidth + dx) + 'px';
-					}
-					if (handleClass.indexOf('left') > -1) {
-						elmnt.style.width = (startWidth - dx) + 'px';
-						elmnt.style.left = (startLeft + dx) + 'px';
-					}
-					if (handleClass.indexOf('bottom') > -1) {
-						elmnt.style.height = (startHeight + dy) + 'px';
-					}
-					if (handleClass.indexOf('top') > -1) {
-						elmnt.style.height = (startHeight - dy) + 'px';
-						elmnt.style.top = (startTop + dy) + 'px';
-					}
-				}
-
-				function stopResize() {
-					document.documentElement.removeEventListener('mousemove', doResize, false);
-					document.documentElement.removeEventListener('mouseup', stopResize, false);
-				}
-			}
+			//show status
+			status_message.innerHTML = file.session.message;
+			status_filepath.innerHTML = file.filePath;
+        } else {
+			status_message.innerHTML = "";
+			status_filepath.innerHTML = "New File";
 		}
+    }
 
-	</script>
+	// Close the tab and remove it
+	// TODO: set a dialog if the isModified is still set
+    function closeTab(filePath) {
+        loadedFiles = loadedFiles.filter(file => file.filePath !== filePath);
+        var tab = document.querySelector('#fileTabs li[data-file="' + filePath + '"]');
+        if (tab) tab.parentNode.removeChild(tab);
+        if (loadedFiles.length > 0) {
+            activateTab(loadedFiles[loadedFiles.length - 1].filePath);
+        } else {
+            editor.getSession().setValue('');
+            document.getElementById('filepath').value = '';
+			status_message.innerHTML = "";
+			status_filepath.innerHTML = "";
+        }
+    }
+
+	// Function to load a file and add it as a new tab.
+	function loadFileTab(filePath) {
+		fetch('file_read.php', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded'
+			},
+			body: 'file=' + encodeURIComponent(filePath)
+		})
+			.then(response => {
+				if (!response.ok) {
+					throw new Error("Error loading file: " + filePath);
+				}
+				return response.text();
+			})
+			.then(content => {
+				// Once you have the content, call the tab management function.
+				addTab(filePath, content);
+			})
+			.catch(error => {
+				console.error('Error loading file: ', error);
+			});
+	}
+
+    // Ace Autocompletion
+    async function loadAndRegisterCompletions() {
+        try {
+            const response = await fetch("resources/get_php_methods.php");
+            if (!response.ok) throw new Error("Failed to load completions");
+            const data = await response.json();
+            const completions = [];
+
+            // Process global functions.
+            data.functions.forEach(fn => {
+                const snippet = fn.name + "(" + "$0" + ")";
+                completions.push({
+                    caption: fn.name + fn.params,
+                    value: fn.name,
+                    meta: fn.meta || "function",
+                    docHTML: '<b>' + fn.name + '</b>' + fn.params + '<br/>' + fn.doc,
+                    snippet: snippet
+                });
+            });
+            // Process class methods.
+            for (const className in data.classes) {
+                if (data.classes.hasOwnProperty(className)) {
+                    data.classes[className].forEach(method => {
+                        const displayName = className + (method.static ? "::" : "->") + method.name;
+                        const snippet = displayName + "(" + "$0" + ")";
+                        completions.push({
+                            caption: displayName + method.params,
+                            value: displayName,
+                            meta: method.meta || "method",
+                            docHTML: '<b>' + displayName + '</b>' + method.params + '<br/>' + method.doc,
+                            snippet: snippet
+                        });
+                    });
+                }
+            }
+			// Map the custom completion to the editor
+            const customCompleter = {
+                getCompletions: function(editor, session, pos, prefix, callback) {
+                    let line = session.getLine(pos.row).substring(0, pos.column);
+                    let filtered = [];
+                    const staticMatch = line.match(/(?:\$)?(\w+)\s*::\s*$/);
+                    const instanceMatch = line.match(/(?:\$)?(\w+)\s*->\s*$/);
+                    if (staticMatch) {
+                        const targetClass = staticMatch[1].toLowerCase();
+                        filtered = completions.filter(item => item.value.toLowerCase().startsWith(targetClass + "::"));
+                    } else if (instanceMatch) {
+                        const targetClass = instanceMatch[1].toLowerCase();
+                        filtered = completions.filter(item => {
+                            let val = item.value.toLowerCase();
+                            return val.startsWith(targetClass + "->") || val.startsWith(targetClass + "::");
+                        });
+                    } else {
+                        filtered = completions.filter(item =>
+                            item.value.toLowerCase().includes(prefix.toLowerCase()) ||
+                            item.caption.toLowerCase().includes(prefix.toLowerCase())
+                        );
+                    }
+                    filtered.sort((a, b) => a.caption.localeCompare(b.caption));
+                    callback(null, filtered);
+                },
+                insertMatch: function(editor, data) {
+                    if (data.snippet) {
+                        const SnippetManager = ace.require("ace/snippets").snippetManager;
+                        SnippetManager.insertSnippet(editor, data.snippet);
+                    } else {
+                        editor.insert(data.value);
+                    }
+                }
+            };
+			// Get the language tools
+            const langTools = ace.require("ace/ext/language_tools");
+			// Set the completer to use only our version
+            langTools.setCompleters([customCompleter]);
+        } catch (error) {
+            console.error("Error loading completions:", error);
+        }
+    }
+
+	// Call the async functions
+    loadFileList();
+    loadClipList();
+    loadAndRegisterCompletions();
+
+	// Setup the editor styling
+	editor.setOptions(getOptions());
+	document.getElementById('editor').style.fontSize = document.getElementById('size').value;
+
+	// Setup the editor hotkey CTRL+S
+	<?php key_press('ctrl+s', 'down', 'window', null, null, "save(); return false;", false); ?>
+
+	// Prevent form submission with Enter key
+	<?php key_press('enter', 'down', '#current_file', null, null, 'return false;', false); ?>
+
+	// Open file manager/clip library pane with Ctrl+Q
+	<?php key_press('ctrl+q', 'down', 'window', null, null, 'toggle_sidebar(); focus_editor(); return false;', false); ?>
+
+	// ---------------------------------------------
+	// --- http://www.codeproject.com/jscript/dhtml_treeview.asp
+	// --- Name:    Easy DHTML Treeview           --
+	// --- Author:  D.D. de Kerf                  --
+	// --- Version: 0.2          Date: 13-6-2001  --
+	// ---------------------------------------------
+	function Toggle(node) {
+		// Unfold the branch if it isn't visible
+		if (node.nextSibling.style.display === 'none') {
+			node.nextSibling.style.display = 'block';
+		} else {
+		// Collapse the branch if it IS visible
+			node.nextSibling.style.display = 'none';
+		}
+	}
+</script>
+</body>
 </html>

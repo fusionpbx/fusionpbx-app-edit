@@ -26,84 +26,101 @@
 */
 
 //includes files
-	require_once dirname(__DIR__, 2) . "/resources/require.php";
-	require_once "resources/check_auth.php";
+require_once dirname(__DIR__, 2) . "/resources/require.php";
+require_once "resources/check_auth.php";
 
 //check permissions
-	if (permission_exists('edit_view')) {
-		//access granted
-	}
-	else {
-		echo "access denied";
-		exit;
-	}
+if (permission_exists('edit_view')) {
+	//access granted
+} else {
+	echo "access denied";
+	exit;
+}
+
+//add multi-lingual support
+$language = new text();
+$text = $language->get();
+
+//set the domain and user
+$domain_uuid = $_SESSION['domain_uuid'] ?? '';
+$user_uuid = $_SESSION['user_uuid'] ?? '';
+
+//ensure database and settings objects are created
+global $database;
+if (empty($database) || !($database instanceof database)) {
+	$database = database::new();
+}
+if (empty($settings) || !($settings instanceof settings)) {
+	$settings = new settings(['database' => $database, 'domain_uuid' => $domain_uuid, 'user_uuid' => $user_uuid]);
+}
 
 //add css and javascript
-	require_once "header.php";
+require_once "header.php";
 
 //define function recur_dir
-	function recur_dir($dir) {
-		clearstatcache();
-		$html_dir_list = '';
-		$html_file_list = '';
-		$dir_handle = opendir($dir);
-		$dir_array = array();
-		if (($dir_handle)) {
-			$x = 0;
-			while (false !== ($file = readdir($dir_handle))) {
-				if ($file != "." AND $file != "..") {
-					$newpath = $dir.'/'.$file;
-					$level = explode('/',$newpath);
-					if (
-						substr(strtolower($newpath), -4) == ".svn" ||
-						substr(strtolower($newpath), -4) == ".git" ||
-						substr(strtolower($newpath), -3) == ".db" ||
-						substr(strtolower($newpath), -4) == ".jpg" ||
-						substr(strtolower($newpath), -4) == ".gif" ||
-						substr(strtolower($newpath), -4) == ".png" ||
-						substr(strtolower($newpath), -4) == ".ico" ||
-						substr(strtolower($newpath), -4) == ".ttf"
-						) {
-						//ignore certain files (and folders)
-					}
-					else {
-						$dir_array[] = $newpath;
-					}
-					if ($x > 1000) { break; }
-					$x++;
+function recur_dir($dir) {
+	clearstatcache();
+	$html_dir_list = '';
+	$html_file_list = '';
+	$dir_handle = opendir($dir);
+	$dir_array = array();
+	if (($dir_handle)) {
+		$x = 0;
+		while (false !== ($file = readdir($dir_handle))) {
+			if ($file != "." and $file != "..") {
+				$newpath = $dir . '/' . $file;
+				$level = explode('/', $newpath);
+				if (
+					substr(strtolower($newpath), -4) == ".svn" ||
+					substr(strtolower($newpath), -4) == ".git" ||
+					substr(strtolower($newpath), -3) == ".db" ||
+					substr(strtolower($newpath), -4) == ".jpg" ||
+					substr(strtolower($newpath), -4) == ".gif" ||
+					substr(strtolower($newpath), -4) == ".png" ||
+					substr(strtolower($newpath), -4) == ".ico" ||
+					substr(strtolower($newpath), -4) == ".ttf"
+				) {
+					//ignore certain files (and folders)
+				} else {
+					$dir_array[] = $newpath;
 				}
+				if ($x > 1000) {
+					break;
+				}
+				$x++;
 			}
 		}
-
-		asort($dir_array);
-		foreach ($dir_array as $newpath){
-			$level = explode('/',$newpath);
-
-			if (is_dir($newpath)) {
-				$dirname = end($level);
-				$html_dir_list .= "<div style='white-space: nowrap; padding-left: 16px;'>\n";
-				$html_dir_list .= "<a onclick='Toggle(this);' style='display: block; cursor: pointer;'><img src='resources/images/icon_folder.png' border='0' align='absmiddle' style='margin: 1px 2px 3px 0px;'>".$dirname."</a>";
-				$html_dir_list .= "<div style='display: none;'>".recur_dir($newpath)."</div>\n";
-				$html_dir_list .= "</div>\n";
-			}
-			else {
-				$filename = end($level);
-				$filesize = round(filesize($newpath)/1024, 2);
-				$newpath = str_replace ('//', '/', $newpath);
-				$newpath = str_replace ("\\", "/", $newpath);
-				$html_file_list .= "<div style='white-space: nowrap; padding-left: 16px;'>\n";
-				$html_file_list .= "<a href='javascript:void(0);' onclick=\"document.getElementById('filepath').value='".$newpath."'; document.getElementById('current_file').value = '".$newpath."'; makeRequest('file_read.php','file=".urlencode($newpath)."');\" title='".$newpath." &#10; ".$filesize." KB'>";
-				$html_file_list .= "<img src='resources/images/icon_file.png' border='0' align='absmiddle' style='margin: 1px 2px 3px -1px;'>".$filename."</a>\n";
-				$html_file_list .= "</div>\n";
-			}
-		}
-
-		closedir($dir_handle);
-		return $html_dir_list ."\n". $html_file_list;
 	}
+
+	asort($dir_array);
+	foreach ($dir_array as $new_path) {
+		$level = explode('/', $new_path);
+
+		if (is_dir($new_path)) {
+			$dirname = end($level);
+			$html_dir_list .= "<div style='white-space: nowrap; padding-left: 16px;'>\n";
+			$html_dir_list .= "<a onclick='Toggle(this);' style='display: block; cursor: pointer;'><img alt='folder' src='resources/images/icon_folder.png' style='margin: 1px 2px 3px 0px;'>$dirname</a>";
+			$html_dir_list .= "<div style='display: none;'>" . recur_dir($new_path) . "</div>\n";
+			$html_dir_list .= "</div>\n";
+		} else {
+			$filename = end($level);
+			$filesize = round(filesize($new_path) / 1024, 2);
+			$new_path = str_replace('//', '/', $new_path);
+			$new_path = str_replace("\\", "/", $new_path);
+			$html_file_list .= "<div style='white-space: nowrap; padding-left: 16px;'>\n";
+			$html_file_list .= "<a href='javascript:void(0);' onclick=\"loadFileTab('$new_path');\" title='$new_path &#10; $filesize KB'>";
+			$html_file_list .= "<img alt='file' src='resources/images/icon_file.png' style='margin: 1px 2px 3px -1px;'>$filename</a>\n";
+			$html_file_list .= "</div>\n";
+		}
+	}
+
+	closedir($dir_handle);
+	return $html_dir_list . "\n" . $html_file_list;
+}
 
 //get the directory
 	if (!isset($_SESSION)) { session_start(); }
+
 	switch ($_SESSION["app"]["edit"]["dir"]) {
 		case 'scripts':
 			$edit_directory = $settings->get('switch', 'scripts');
@@ -119,43 +136,23 @@
 				case "Linux":
 					if (file_exists('/usr/share/fusionpbx/templates/provision')) {
 						$edit_directory = '/usr/share/fusionpbx/templates/provision';
-					}
-					elseif (file_exists('/etc/fusionpbx/resources/templates/provision')) {
+					} elseif (file_exists('/etc/fusionpbx/resources/templates/provision')) {
 						$edit_directory = '/etc/fusionpbx/resources/templates/provision';
-					}
-					else {
-						$edit_directory = $_SERVER["DOCUMENT_ROOT"].PROJECT_PATH."/resources/templates/provision";
+					} else {
+						$edit_directory = $_SERVER["DOCUMENT_ROOT"] . PROJECT_PATH . "/resources/templates/provision";
 					}
 					break;
 				case "FreeBSD":
-					if (file_exists('/usr/local/share/fusionpbx/templates/provision')) {
-						$edit_directory = '/usr/share/fusionpbx/templates/provision';
-					}
-					elseif (file_exists('/usr/local/etc/fusionpbx/resources/templates/provision')) {
-						$edit_directory = '/usr/local/etc/fusionpbx/resources/templates/provision';
-					}
-					else {
-						$edit_directory = $_SERVER["DOCUMENT_ROOT"].PROJECT_PATH."/resources/templates/provision";
-					}
-					break;
+				case "OpenBSD":
 				case "NetBSD":
 					if (file_exists('/usr/local/share/fusionpbx/templates/provision')) {
 						$edit_directory = '/usr/share/fusionpbx/templates/provision';
-					}
-					else {
-						$edit_directory = $_SERVER["DOCUMENT_ROOT"].PROJECT_PATH."/resources/templates/provision";
-					}
-					break;
-				case "OpenBSD":
-					if (file_exists('/usr/local/share/fusionpbx/templates/provision')) {
-						$edit_directory = '/usr/share/fusionpbx/templates/provision';
-					}
-					else {
-						$edit_directory = $_SERVER["DOCUMENT_ROOT"].PROJECT_PATH."/resources/templates/provision";
+					} else {
+						$edit_directory = $_SERVER["DOCUMENT_ROOT"] . PROJECT_PATH . "/resources/templates/provision";
 					}
 					break;
 				default:
-					$edit_directory = $_SERVER["DOCUMENT_ROOT"].PROJECT_PATH."/resources/templates/provision/";
+					$edit_directory = $_SERVER["DOCUMENT_ROOT"] . PROJECT_PATH . "/resources/templates/provision/";
 			}
 			break;
 		case 'xml':
@@ -167,8 +164,7 @@
 	}
 
 // keyboard shortcut bindings
-echo "<script src='".PROJECT_PATH."/resources/jquery/jquery-3.6.1.min.js'></script>\n";
-echo "<script src='https://code.jquery.com/jquery-migrate-3.1.0.js'></script>\n";
+echo "<script src='" . PROJECT_PATH . "/resources/jquery/jquery-3.6.1.min.js'></script>\n";
 
 //save file
 key_press('ctrl+s', 'down', 'window', null, null, "$('form#frm_edit').submit(); return false;", true);
@@ -182,13 +178,16 @@ key_press('backspace', 'down', 'window', null, null, 'return false;', true);
 echo "</head>\n";
 echo "<body style='margin: 0px; padding: 5px;'>\n";
 
-echo "<div style='text-align: left; padding-top: 3px; padding-bottom: 3px;'><a href='javascript:void(0);' onclick=\"window.open('file_options.php','filewin','left=20,top=20,width=310,height=350,toolbar=0,resizable=0');\" style='text-decoration:none;' title='".$text['label-files']."'><img src='resources/images/icon_gear.png' border='0' align='absmiddle' style='margin: 0px 2px 4px -1px;'>".$text['label-files']."</a></div>\n";
+echo "<div style='text-align: left; padding-top: 3px; padding-bottom: 3px;'>\n";
+echo "	<a href='javascript:void(0);' onclick=\"window.open('file_options.php','filewin','left=20,top=20,width=310,height=350,toolbar=0,resizable=0');\" style='text-decoration:none;' title='" . $text['label-files'] . "'>\n";
+echo "			<img src='resources/images/icon_gear.png' border='0' align='absmiddle' style='margin: 0px 2px 4px -1px;' />\n";
+echo $text['label-files'];
+echo "	</a>\n";
+echo "</div>\n";
 echo "<div style='text-align: left; margin-left: -16px;'>\n";
 
 if (file_exists($edit_directory)) {
-	$edit_html_list = recur_dir($edit_directory);
-
-	echo $edit_html_list;
+	echo recur_dir($edit_directory);
 }
 
 echo "</div>\n";
