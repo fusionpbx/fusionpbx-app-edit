@@ -148,7 +148,7 @@ while (ob_get_level() > 0) {
             border-bottom: 1px solid #ccc;
         }
         /* Main Content */
-        #float_content {
+        #ace_content {
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -247,12 +247,16 @@ while (ob_get_level() > 0) {
         <div id="clip_list">Loading clips...</div>
     </div>
     <!-- Main Content -->
-    <div id="float_content">
+    <div id="ace_content">
         <!-- Editor Header: File Tabs + Toolbar -->
         <div id="editor-header">
             <ul id="fileTabs"></ul>
             <div id="toolbar">
+				<i class="fas fa-window-maximize fa-lg fa-rotate-270 ace_control" title="<?php echo $text['label-toggle_side_bar']; ?>" onclick="toggle_sidebar();"></i>
                 <i class="fas fa-save ace_control" title="<?php echo $text['label-save_changes']; ?>" onclick="save();"></i>
+				<i class="fas fa-list-ul fa-lg ace_control" title="<?php echo $text['label-toggle_line_numbers']; ?>" onclick="toggle_option('numbering');"></i>
+				<i class="fas fa-eye-slash fa-lg ace_control" title="<?php echo $text['label-toggle_invisibles']; ?>" onclick="toggle_option('invisibles');"></i>
+				<i class="fas fa-indent fa-lg ace_control" title="<?php echo $text['label-toggle_indent_guides']; ?>" onclick="toggle_option('indenting');"></i>
                 <i class="fas fa-search ace_control" title="<?php echo $text['label-find_replace']; ?>" onclick="editor.execCommand('replace');"></i>
                 <i class="fas fa-chevron-down ace_control" title="<?php echo $text['label-go_to_line']; ?>" onclick="editor.execCommand('gotoline');"></i>
                 <!-- Editor mode, size, and theme selectors -->
@@ -345,7 +349,7 @@ while (ob_get_level() > 0) {
 				<span id="status-cursor-column">Column:</span>
 			</div>
         </div>
-        <!-- Hidden Form for Saving (if needed) -->
+        <!-- Toolbar -->
         <form id="frm_edit" method="post" action="file_save.php" onsubmit="return submit_check();" style="display:none;">
             <textarea name="content" id="editor_source"></textarea>
             <input type="hidden" name="filepath" id="filepath" value="">
@@ -405,6 +409,7 @@ while (ob_get_level() > 0) {
 		let file = getActiveFile();
 		if (file.originalContent === editor.getSession().getValue()) {
 			status_message.innerHTML = "File Not Modified.";
+			focus_editor();
 			return;
 		}
         let formData = new FormData();
@@ -529,7 +534,22 @@ while (ob_get_level() > 0) {
 			editor.selection.on('changeCursor', updateCursorStatus);
         }
 		updateStatusBar();
+		updateMode();
+		focus_editor();
     }
+
+	function updateMode() {
+		// Get the current mode from the editor's session
+		var modeObj = editor.getSession().getMode();
+
+		// The mode object typically contains an $id property,
+		// e.g., "ace/mode/php". We then extract the actual mode name.
+		var currentModeId = modeObj.$id; // e.g. "ace/mode/php"
+		var currentMode = currentModeId.split('/').pop(); // "php"
+
+		// Now update the toolbar dropdown (assuming its id is "mode")
+		document.getElementById("mode").value = currentMode;
+	}
 
 	function updateStatusBar() {
 		const file = getActiveFile();
@@ -588,7 +608,7 @@ while (ob_get_level() > 0) {
 				return response.text();
 			})
 			.then(content => {
-				// Once you have the content, call the tab management function.
+				// Call the tab management function.
 				addTab(filePath, content);
 			})
 			.catch(error => {
@@ -673,6 +693,38 @@ while (ob_get_level() > 0) {
             console.error("Error loading completions:", error);
         }
     }
+
+	// Toolbar Functions
+	function toggle_option(opt) {
+		switch (opt) {
+			case 'numbering': 	toggle_option_do('showLineNumbers'); toggle_option_do('fadeFoldWidgets'); break;
+			case 'invisibles':	toggle_option_do('showInvisibles'); break;
+			case 'indenting':	toggle_option_do('displayIndentGuides'); break;
+		}
+		focus_editor();
+	}
+
+	function toggle_option_do(opt_name) {
+		var opt_val = editor.getOption(opt_name);
+		editor.setOption(opt_name, ((opt_val) ? false : true));
+	}
+
+	function toggle_sidebar() {
+		var td_sidebar = document.getElementById('float_sidebar');
+		if (td_sidebar.style.display === '') {
+			//document.getElementById('td_save').style.paddingLeft = '12px';
+			td_sidebar.style.display = 'none';
+		}
+		else {
+			//document.getElementById('td_save').style.paddingLeft = '0';
+			td_sidebar.style.display = '';
+		}
+		focus_editor();
+	}
+
+	function focus_editor() {
+		editor.focus();
+	}
 
 	// Call the async functions
     loadFileList();
