@@ -427,9 +427,7 @@ while (ob_get_level() > 0) {
 					file.originalContent = editor.getSession().getValue();
 					file.session.message = "File Saved.";
 					status_message.innerHTML = "File Saved.";
-					if (file.session.tab.innerText.charAt(0) === "*") {
-						file.session.tab.innerText = file.session.tab.innerText.slice(1);
-					}
+					file.session.tab.childNodes[0].style.display = "none";
 				}
             } else {
                 alert("<?php echo $text['message-problem']; ?>");
@@ -492,8 +490,13 @@ while (ob_get_level() > 0) {
         tab.onclick = () => activateTab(filePath);
 
 		//save the tab and filename
-		session.tab = tab;
 		session.fileName = fileName;
+
+		// Set a modifier tag on the close button
+		var modified = document.createElement('span');
+		modified.innerText = "* ";
+		modified.style.fontWeight = "bold";
+		modified.style.display = "none";
 
         // Close button for the tab.
         var closeBtn = document.createElement('span');
@@ -504,9 +507,10 @@ while (ob_get_level() > 0) {
             e.stopPropagation();
             closeTab(filePath);
         };
+		tab.appendChild(modified);
         tab.appendChild(closeBtn);
         document.getElementById('fileTabs').appendChild(tab);
-		loadedFiles.push({filePath: filePath, fileName: fileName, session: session, originalContent: content});
+		loadedFiles.push({filePath: filePath, fileName: fileName, session: session, originalContent: content, tab: tab});
 		activateTab(filePath);
     }
 
@@ -558,16 +562,12 @@ while (ob_get_level() > 0) {
 				file.session.message = "Modified";
 				status_message.innerHTML = "Modified";
 				status_filepath.innerHTML = file.filePath;
-				if (file.session.tab.innerText.charAt(0) !== "*") {
-					file.session.tab.innerText = "*" + file.session.tab.innerText;
-				}
+				file.tab.childNodes[1].style.display = 'inline';
 			} else {
 				status_message.innerHTML = "Read " + file.originalContent.length + " bytes";
 				status_filepath.innerHTML = file.filePath;
-				file.session.tab.title = file.fileName;
-				if (file.session.tab.innerText.charAt(0) === "*") {
-					file.session.tab.innerText = file.session.tab.innerText.slice(1);
-				}
+				file.tab.title = file.fileName;
+				file.tab.childNodes[1].style.display = 'none';
 			}
 		} else {
 			status_message.innerHTML = "";
@@ -655,27 +655,39 @@ while (ob_get_level() > 0) {
 			// Map the custom completion to the editor
             const customCompleter = {
                 getCompletions: function(editor, session, pos, prefix, callback) {
+
 					// Use the current file name as the class name to capture "$this->" methods
 					let currentClassName = document.getElementById('filepath').value.split('/').pop().slice(0, -4).toLowerCase();
+
 					// Get the line to test
                     let line = session.getLine(pos.row).substring(0, pos.column);
+
 					/// Initialize the array
                     let filtered = [];
                     const staticMatch = line.match(/(?:\$)?(\w+)\s*::\s*$/);
                     const instanceMatch = line.match(/(?:\$)?(\w+)\s*->\s*$/);
-                    if (staticMatch) {
+
+					if (staticMatch) {
+						// Static match
                         const targetClass = staticMatch[1].toLowerCase();
                         filtered = completions.filter(item => item.value.toLowerCase().startsWith(targetClass + "::"));
                     } else if (instanceMatch) {
+
+						// Instance match
                         let targetClass = instanceMatch[1].toLowerCase();
+
+						// Check for using "$this->" keyword
 						if (targetClass === "this") {
 							targetClass = currentClassName;
 						}
+
+						// Filter the matches to show only object matches
                         filtered = completions.filter(item => {
                             let val = item.value.toLowerCase();
                             return val.startsWith(targetClass + "->") || val.startsWith(targetClass + "::");
                         });
                     } else {
+						// Match on any text
                         filtered = completions.filter(item =>
                             item.value.toLowerCase().includes(prefix.toLowerCase()) ||
                             item.caption.toLowerCase().includes(prefix.toLowerCase())
