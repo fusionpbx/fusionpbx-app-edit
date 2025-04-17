@@ -37,9 +37,42 @@ if (!permission_exists('edit_view')) {
 $domain_uuid = $_SESSION['domain_uuid'] ?? '';
 $user_uuid = $_SESSION['user_uuid'] ?? '';
 
-// Add multi-lingual support
-$language = new text();
-$text = $language->get();
+//create the settings object
+	if (!$settings) {
+		$settings = new settings();
+	}
+
+//set the directory title and mode
+	switch ($_GET["dir"]) {
+		case 'xml':
+			$title = 'XML';
+			$mode = 'xml';
+			$dir = 'xml';
+			break;
+		case 'provision':
+			$title = 'Provision';
+			$mode = 'xml';
+			$dir = 'provision';
+			break;
+		case 'php':
+			$title = 'PHP';
+			$mode = 'php';
+			$dir = 'php';
+			break;
+		case 'scripts':
+			$title = 'Scripts';
+			$mode = 'lua';
+			$dir = 'scripts';
+			break;
+		case 'grammar':
+			$title = 'Grammar';
+			$mode = 'xml';
+			$dir = 'grammar';
+			break;
+		default:
+			$mode = 'text';
+			$dir = '';
+	}
 
 // Set the directory title and mode based on the query parameter
 switch ($_GET["dir"]) {
@@ -73,8 +106,17 @@ switch ($_GET["dir"]) {
 		$dir = '';
 }
 
-// Save the sanitized directory
-$_SESSION['app']['edit']['dir'] = $dir;
+//ensure we have a settings object for older installs
+if (empty($settings) || !($settings instanceof settings)) {
+	$settings = new settings(['database' => database::new(), 'domain_uuid' => $domain_uuid ?? $_SESSION['domain_uuid'] ?? '', 'user_uuid' => $user_uuid ?? $_SESSION['user_uuid'] ?? '']);
+}
+
+//load editor preferences/defaults
+	$setting_size       = $settings->get('editor', 'font_size', '12px');
+	$setting_theme      = $settings->get('editor', 'theme', 'cobalt');
+	$setting_invisibles = $settings->get('editor', 'invisibles','false');
+	$setting_indenting  = $settings->get('editor', 'indent_guides','false');
+	$setting_numbering  = $settings->get('editor', 'line_numbers','true');
 
 // Ensure the database and settings objects are created
 global $database;
@@ -814,30 +856,5 @@ while (ob_get_level() > 0) {
 			editor.setOptions(getOptions());
 			document.getElementById('editor').style.fontSize = document.getElementById('size').value;
 
-			// Setup the editor hotkey CTRL+S
-<?php key_press('ctrl+s', 'down', 'window', null, null, "save(); return false;", false); ?>
-
-			// Prevent form submission with Enter key
-<?php key_press('enter', 'down', '#current_file', null, null, 'return false;', false); ?>
-
-			// Open file manager/clip library pane with Ctrl+Q
-<?php key_press('ctrl+q', 'down', 'window', null, null, 'toggle_sidebar(); focus_editor(); return false;', false); ?>
-
-			// ---------------------------------------------
-			// --- http://www.codeproject.com/jscript/dhtml_treeview.asp
-			// --- Name:    Easy DHTML Treeview           --
-			// --- Author:  D.D. de Kerf                  --
-			// --- Version: 0.2          Date: 13-6-2001  --
-			// ---------------------------------------------
-			function Toggle(node) {
-				// Unfold the branch if it isn't visible
-				if (node.nextSibling.style.display === 'none') {
-					node.nextSibling.style.display = 'block';
-				} else {
-					// Collapse the branch if it IS visible
-					node.nextSibling.style.display = 'none';
-				}
-			}
-		</script>
-	</body>
+</script>
 </html>
