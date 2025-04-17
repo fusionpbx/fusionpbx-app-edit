@@ -64,35 +64,40 @@ function recur_dir($dir) {
 	$html_file_list = '';
 	$dir_handle = opendir($dir);
 	$dir_array = array();
-	if (($dir_handle)) {
-		$x = 0;
-		while (false !== ($file = readdir($dir_handle))) {
-			if ($file != "." and $file != "..") {
-				$newpath = $dir . '/' . $file;
-				$level = explode('/', $newpath);
-				if (
-					substr(strtolower($newpath), -4) == ".svn" ||
-					substr(strtolower($newpath), -4) == ".git" ||
-					substr(strtolower($newpath), -3) == ".db" ||
-					substr(strtolower($newpath), -4) == ".jpg" ||
-					substr(strtolower($newpath), -4) == ".gif" ||
-					substr(strtolower($newpath), -4) == ".png" ||
-					substr(strtolower($newpath), -4) == ".ico" ||
-					substr(strtolower($newpath), -4) == ".ttf"
-				) {
-					//ignore certain files (and folders)
-				} else {
-					$dir_array[] = $newpath;
-				}
-				if ($x > 1000) {
-					break;
-				}
-				$x++;
-			}
+	if (!($dir_handle)) {
+		return;
+	}
+	$x = 0;
+	while (false !== ($file = readdir($dir_handle))) {
+		if ($file === '.' || $file === '..') {
+			continue;
 		}
+		$newpath = $dir . '/' . $file;
+		$level = explode('/', $newpath);
+		if (
+			substr(strtolower($newpath), -4) == ".svn" ||
+			substr(strtolower($newpath), -4) == ".git" ||
+			substr(strtolower($newpath), -3) == ".db" ||
+			substr(strtolower($newpath), -4) == ".jpg" ||
+			substr(strtolower($newpath), -4) == ".gif" ||
+			substr(strtolower($newpath), -4) == ".png" ||
+			substr(strtolower($newpath), -4) == ".ico" ||
+			substr(strtolower($newpath), -4) == ".ttf"
+		) {
+			//ignore certain files (and folders)
+			continue;
+		}
+		$dir_array[] = $newpath;
+		//only allow up to 1000 files
+		if (++$x > 1000) { break; }
 	}
 
+	//finished with directory
+	closedir($dir_handle);
+
+	//sort directories
 	asort($dir_array);
+
 	foreach ($dir_array as $new_path) {
 		$level = explode('/', $new_path);
 
@@ -114,7 +119,7 @@ function recur_dir($dir) {
 		}
 	}
 
-	closedir($dir_handle);
+	//return completed html
 	return $html_dir_list . "\n" . $html_file_list;
 }
 
@@ -123,13 +128,13 @@ function recur_dir($dir) {
 
 	switch ($_SESSION["app"]["edit"]["dir"]) {
 		case 'scripts':
-			$edit_directory = $settings->get('switch', 'scripts');
+			$edit_directory = $settings->get('switch', 'scripts', '/usr/share/freeswitch/scripts');
 			break;
 		case 'php':
 			$edit_directory = dirname(__DIR__, 2);
 			break;
 		case 'grammar':
-			$edit_directory = $settings->get('switch', 'grammar');
+			$edit_directory = $settings->get('switch', 'grammar', '/usr/share/freeswitch/grammar');
 			break;
 		case 'provision':
 			switch (PHP_OS) {
@@ -139,7 +144,7 @@ function recur_dir($dir) {
 					} elseif (file_exists('/etc/fusionpbx/resources/templates/provision')) {
 						$edit_directory = '/etc/fusionpbx/resources/templates/provision';
 					} else {
-						$edit_directory = $_SERVER["DOCUMENT_ROOT"] . PROJECT_PATH . "/resources/templates/provision";
+						$edit_directory = dirname(__DIR__, 2) . "/resources/templates/provision";
 					}
 					break;
 				case "FreeBSD":
@@ -148,15 +153,15 @@ function recur_dir($dir) {
 					if (file_exists('/usr/local/share/fusionpbx/templates/provision')) {
 						$edit_directory = '/usr/share/fusionpbx/templates/provision';
 					} else {
-						$edit_directory = $_SERVER["DOCUMENT_ROOT"] . PROJECT_PATH . "/resources/templates/provision";
+						$edit_directory = dirname(__DIR__, 2) . "/resources/templates/provision";
 					}
 					break;
 				default:
-					$edit_directory = $_SERVER["DOCUMENT_ROOT"] . PROJECT_PATH . "/resources/templates/provision/";
+					$edit_directory = dirname(__DIR__, 2) . "/resources/templates/provision/";
 			}
 			break;
 		case 'xml':
-			$edit_directory = $settings->get('switch', 'conf');
+			$edit_directory = $settings->get('switch', 'conf', '/etc/freeswitch/autoload_configs');
 			break;
 		default:
 			//do not allow unknown settings
