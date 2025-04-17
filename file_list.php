@@ -104,7 +104,7 @@ function recur_dir($dir) {
 		if (is_dir($new_path)) {
 			$dirname = end($level);
 			$html_dir_list .= "<div style='white-space: nowrap; padding-left: 16px;'>\n";
-			$html_dir_list .= "<a onclick='Toggle(this);' style='display: block; cursor: pointer;'><img alt='folder' src='resources/images/icon_folder.png' style='margin: 1px 2px 3px 0px;'>$dirname</a>";
+			$html_dir_list .= "<a onclick='Toggle(this);' style='display: block; cursor: pointer;'><img alt='folder' src='resources/images/icon_folder.png' style='margin: 1px 2px 3px -1px; vertical-align: middle; margin-right: 5px;'>$dirname</a>";
 			$html_dir_list .= "<div style='display: none;'>" . recur_dir($new_path) . "</div>\n";
 			$html_dir_list .= "</div>\n";
 		} else {
@@ -114,7 +114,7 @@ function recur_dir($dir) {
 			$new_path = str_replace("\\", "/", $new_path);
 			$html_file_list .= "<div style='white-space: nowrap; padding-left: 16px;'>\n";
 			$html_file_list .= "<a href='javascript:void(0);' onclick=\"loadFileTab('$new_path');\" title='$new_path &#10; $filesize KB'>";
-			$html_file_list .= "<img alt='file' src='resources/images/icon_file.png' style='margin: 1px 2px 3px -1px;'>$filename</a>\n";
+			$html_file_list .= "<img alt='file' src='resources/images/icon_file.png' style='margin: 1px 2px 3px -1px; vertical-align: middle; margin-right: 5px;'>$filename</a>\n";
 			$html_file_list .= "</div>\n";
 		}
 	}
