@@ -815,6 +815,23 @@
 			editor.focus();
 		}
 
+		// ---------------------------------------------
+		// --- http://www.codeproject.com/jscript/dhtml_treeview.asp
+		// --- Name:    Easy DHTML Treeview           --
+		// --- Author:  D.D. de Kerf                  --
+		// --- Version: 0.2          Date: 13-6-2001  --
+		// ---------------------------------------------
+		function Toggle(node) {
+			// Unfold the branch if it isn't visible
+			if (node.nextSibling.style.display === 'none') {
+				node.nextSibling.style.display = 'block';
+			}
+			// Collapse the branch if it IS visible
+			else {
+				node.nextSibling.style.display = 'none';
+			}
+		}
+
 		// Call the async functions
 		loadFileList();
 		loadClipList();
