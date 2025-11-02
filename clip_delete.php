@@ -30,10 +30,7 @@
 	require_once "resources/check_auth.php";
 
 //check permissions
-	if (permission_exists('clip_delete')) {
-		//access granted
-	}
-	else {
+	if (!permission_exists('clip_delete')) {
 		echo "access denied";
 		exit;
 	}

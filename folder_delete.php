@@ -32,10 +32,7 @@
 	require_once "resources/check_auth.php";
 
 //check the permissions
-	if (permission_exists('edit_save')) {
-		//access granted
-	}
-	else {
+	if (!permission_exists('edit_save')) {
 		echo "access denied";
 		exit;
 	}
