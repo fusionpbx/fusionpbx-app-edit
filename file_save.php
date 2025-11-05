@@ -17,7 +17,7 @@
 
 	The Initial Developer of the Original Code is
 	Mark J Crane <markjcrane@fusionpbx.com>
-	Portions created by the Initial Developer are Copyright (C) 2008-2023
+	Portions created by the Initial Developer are Copyright (C) 2008-2025
 	the Initial Developer. All Rights Reserved.
 
 	Contributor(s):
@@ -51,13 +51,13 @@
 	if (!isset($_SESSION)) { session_start(); }
 	switch ($_SESSION["app"]["edit"]["dir"]) {
 		case 'scripts':
-			$edit_directory = $_SESSION['switch']['scripts']['dir'];
+			$edit_directory = $settings->get('switch','scripts');
 			break;
 		case 'php':
 			$edit_directory = $_SERVER["DOCUMENT_ROOT"].'/'.PROJECT_PATH;
 			break;
 		case 'grammar':
-			$edit_directory = $_SESSION['switch']['grammar']['dir'];
+			$edit_directory = $settings->get('switch','grammar');
 			break;
 		case 'provision':
 			switch (PHP_OS) {
@@ -104,7 +104,7 @@
 			}
 			break;
 		case 'xml':
-			$edit_directory = $_SESSION['switch']['conf']['dir'];
+			$edit_directory = $settings->get('switch','conf');
 			break;
 	}
 	if (!isset($edit_directory) && is_array($_SESSION['editor']['path'])) {

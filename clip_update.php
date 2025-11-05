@@ -17,7 +17,7 @@
 
 	The Initial Developer of the Original Code is
 	Mark J Crane <markjcrane@fusionpbx.com>
-	Portions created by the Initial Developer are Copyright (C) 2008-2023
+	Portions created by the Initial Developer are Copyright (C) 2008-2025
 	the Initial Developer. All Rights Reserved.
 
 	Contributor(s):
@@ -37,6 +37,9 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+
+//connect to the database
+	$database = database::new();
 
 //process the HTTP POST
 	if (count($_POST) > 0) {
@@ -64,17 +67,14 @@
 		$p = permissions::new();
 		$p->add('clip_edit', 'temp');
 
-		$database = new database;
-		$database->app_name = 'edit';
-		$database->app_uuid = '17e628ee-ccfa-49c0-29ca-9894a0384b9b';
 		$database->save($array);
 		unset($array);
 
-		$p->add('clip_edit', 'temp');
+		$p->delete('clip_edit', 'temp');
 
 		//redirect the browser
 		require_once "header.php";
-		echo "<meta http-equiv=\"refresh\" content=\"1;url=clip_options.php\">\n";
+		echo "<meta http-equiv='refresh' content='1;url=clip_options.php'>\n";
 		echo $text['message-update'];
 		require_once "footer.php";
 		exit;
@@ -87,7 +87,6 @@
 			$sql = "select * from v_clips ";
 			$sql .= "where clip_uuid = :clip_uuid ";
 			$parameters['clip_uuid'] = $clip_uuid;
-			$database = new database;
 			$row = $database->select($sql, $parameters, 'row');
 			if (is_array($row) && @sizeof($row) != 0) {
 				$clip_name = $row["clip_name"];
@@ -104,42 +103,42 @@
 	require_once "header.php";
 	echo "<table width='100%' border='0' cellpadding='0' cellspacing='2'>\n";
 	echo "<tr>\n";
-	echo "	<td align=\"left\">\n";
+	echo "	<td align='left'>\n";
 
 	echo "<form method='post' action=''>";
 	echo "<table border='0' width='100%'>";
 	echo "	<tr>";
 	echo "		<td>Name</td>";
-	echo "		<td><input type='text' class='txt' name='clip_name' value='$clip_name'></td>";
+	echo "		<td><input type='text' class='txt' name='clip_name' value='".$clip_name."'></td>";
 	echo "	</tr>";
 
 	echo "	<tr>";
 	echo "		<td>Folder</td>";
-	echo "		<td><input type='text' class='txt'  name='clip_folder' value='$clip_folder'></td>";
+	echo "		<td><input type='text' class='txt'  name='clip_folder' value='".$clip_folder."'></td>";
 	echo "	</tr>";
 
 	echo "	<tr>";
 	echo "		<td colspan='2'>Before Selection<br>";
-	echo "		  <textarea class='txt' style='resize: vertical;' name='clip_text_start'>$clip_text_start</textarea>";
+	echo "		  <textarea class='txt' style='resize: vertical;' name='clip_text_start'>".$clip_text_start."</textarea>";
 	echo "		</td>";
 	echo "	</tr>";
 
 	echo "	<tr>";
 	echo "		<td colspan='2'>After Selection<br>";
-	echo "		  <textarea class='txt' style='resize: vertical;' name='clip_text_end'>$clip_text_end</textarea>";
+	echo "		  <textarea class='txt' style='resize: vertical;' name='clip_text_end'>".$clip_text_end."</textarea>";
 	echo "		</td>";
 	echo "	</tr>";
 
 	echo "	<tr>";
 	echo "		<td colspan='2'>Notes<br>";
-	echo "		  <textarea class='txt' style='resize: vertical;' name='clip_desc'>$clip_desc</textarea>";
+	echo "		  <textarea class='txt' style='resize: vertical;' name='clip_desc'>".$clip_desc."</textarea>";
 	echo "		</td>";
 	echo "	</tr>";
 
 	echo "	<tr>";
 	echo "		<td align='left'><input type='button' value='".$text['button-back']."' onclick='history.back()'></td>";
 	echo "		<td align='right'>";
-	echo "			<input type='hidden' name='id' value='$clip_uuid'>";
+	echo "			<input type='hidden' name='id' value='".$clip_uuid."'>";
 	echo "			<input type='submit' name='submit' value='Update'>";
 	echo "		</td>";
 	echo "	</tr>";

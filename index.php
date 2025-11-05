@@ -17,7 +17,7 @@
 
 	The Initial Developer of the Original Code is
 	Mark J Crane <markjcrane@fusionpbx.com>
-	Portions created by the Initial Developer are Copyright (C) 2008-2024
+	Portions created by the Initial Developer are Copyright (C) 2008-2025
 	the Initial Developer. All Rights Reserved.
 
 	Contributor(s):
@@ -85,11 +85,11 @@ if (empty($settings) || !($settings instanceof settings)) {
 }
 
 //load editor preferences/defaults
-	$setting_size       = $settings->get('editor', 'font_size', '12px');
-	$setting_theme      = $settings->get('editor', 'theme', 'cobalt');
-	$setting_invisibles = $settings->get('editor', 'invisibles','false');
-	$setting_indenting  = $settings->get('editor', 'indent_guides','false');
-	$setting_numbering  = $settings->get('editor', 'line_numbers','true');
+	$setting_size = $settings->get('editor', 'font_size', '12px');
+	$setting_theme = $settings->get('editor', 'theme', 'cobalt');
+	$setting_invisibles = $settings->get('editor', 'invisibles',false);
+	$setting_indenting = $settings->get('editor', 'indent_guides',false);
+	$setting_numbering = $settings->get('editor', 'line_numbers',true);
 
 //get and then set the favicon
 	$favicon = $settings->get('theme', 'favicon', PROJECT_ROOT .'/themes/default/favicon.ico');
@@ -356,12 +356,12 @@ if (empty($settings) || !($settings instanceof settings)) {
       theme: 'ace/theme/'+document.getElementById('theme').options[document.getElementById('theme').selectedIndex].value,
       selectionStyle: 'text',
       cursorStyle: 'smooth',
-      showInvisibles: <?=$setting_invisibles?>,
-      displayIndentGuides: <?=$setting_indenting?>,
-      showLineNumbers: <?=$setting_numbering?>,
+      showInvisibles: <?=$setting_invisibles ? 'true' : 'false'?>,
+      displayIndentGuides: <?=$setting_indenting ? 'true' : 'false'?>,
+      showLineNumbers: <?=$setting_numbering ? 'true' : 'false'?>,
       showGutter: true,
       scrollPastEnd: true,
-      fadeFoldWidgets: <?=$setting_numbering?>,
+      fadeFoldWidgets: <?=$setting_numbering ? 'true' : 'false'?>,
       showPrintMargin: false,
       highlightGutterLine: false,
       useSoftTabs: false,

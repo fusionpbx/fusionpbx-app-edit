@@ -17,7 +17,7 @@
 
 	The Initial Developer of the Original Code is
 	Mark J Crane <markjcrane@fusionpbx.com>
-	Portions created by the Initial Developer are Copyright (C) 2008-2023
+	Portions created by the Initial Developer are Copyright (C) 2008-2025
 	the Initial Developer. All Rights Reserved.
 
 	Contributor(s):
@@ -39,14 +39,16 @@
 	$language = new text;
 	$text = $language->get();
 
+//connect to the database
+	$database = database::new();
+
 if (count($_POST)>0) {
 	$clip_name = $_POST["clip_name"];
 	$clip_folder = $_POST["clip_folder"];
 	$clip_text_start = $_POST["clip_text_start"];
 	$clip_text_end = $_POST["clip_text_end"];
 	$clip_desc = $_POST["clip_desc"];
-	$clip_order = $_POST["clip_order"];
-	if (strlen($clip_order) == 0) { $clip_order = 0; }
+	$clip_order = $_POST["clip_order"] ?? 0;
 
 	//no slashes
 	$clip_name = str_replace('/', '|', $clip_name);
@@ -64,16 +66,13 @@ if (count($_POST)>0) {
 	$p = permissions::new();
 	$p->add('clip_add', 'temp');
 
-	$database = new database;
-	$database->app_name = 'edit';
-	$database->app_uuid = '17e628ee-ccfa-49c0-29ca-9894a0384b9b';
 	$database->save($array);
 	unset($array);
 
-	$p->add('clip_add', 'temp');
+	$p->delete('clip_add', 'temp');
 
 	require_once "header.php";
-	echo "<meta http-equiv=\"refresh\" content=\"1;url=clip_options.php\">\n";
+	echo "<meta http-equiv='refresh' content='1;url=clip_options.php'>\n";
 	echo $text['message-add'];
 	require_once "footer.php";
 	exit;
@@ -83,7 +82,7 @@ if (count($_POST)>0) {
 	require_once "header.php";
 	echo "<table width='100%' border='0' cellpadding='0' cellspacing='2'>\n";
 	echo "<tr>\n";
-	echo "	<td align=\"left\">\n";
+	echo "	<td align='left'>\n";
 
 	echo "<form method='post' action=''>";
 	echo "<table width='100%' border='0'>";

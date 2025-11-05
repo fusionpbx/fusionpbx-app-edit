@@ -17,7 +17,7 @@
 
 	The Initial Developer of the Original Code is
 	Mark J Crane <markjcrane@fusionpbx.com>
-	Portions created by the Initial Developer are Copyright (C) 2008-2023
+	Portions created by the Initial Developer are Copyright (C) 2008-2025
 	the Initial Developer. All Rights Reserved.
 
 	Contributor(s):
@@ -41,6 +41,9 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+
+//connect to the database
+	$database = database::new();
 
 //check if this is a file
 	function isfile($filename) {
@@ -162,11 +165,10 @@
 	echo "<div style='padding-bottom: 3px;'><a href='javascript:void(0);' onclick=\"window.open('clip_options.php','clipwin','left=20,top=20,width=310,height=350,toolbar=0,resizable=0');\" style='text-decoration:none; cursor: pointer;' title=\"".$text['label-clip-library']."\"><img src='resources/images/icon_gear.png' border='0' align='absmiddle' style='margin: 0px 2px 4px -1px;'>".$text['label-clip-library']."</a></div>\n";
 
 	$sql = "select * from v_clips order by clip_folder asc, clip_name asc";
-	$database = new database;
 	$result = $database->select($sql, null, 'all');
 	unset($sql);
 
-	if (!empty($result) && is_array($result) && @sizeof($result) != 0) {
+	if (!empty($result) && is_array($result)) {
 		$master_array = array();
 		foreach ($result as $row) {
 			if (!empty($row['clip_folder'])) {
@@ -212,7 +214,7 @@
 						echo "<textarea style='display: none' id='after_".$row['uuid']."'>".$row['after']."</textarea>\n";
 						echo "</div>\n";
 					}
-					
+
 					echo "</div>\n";
 				}
 			}

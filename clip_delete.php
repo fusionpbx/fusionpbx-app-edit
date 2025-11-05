@@ -17,7 +17,7 @@
 
 	The Initial Developer of the Original Code is
 	Mark J Crane <markjcrane@fusionpbx.com>
-	Portions created by the Initial Developer are Copyright (C) 2008-2023
+	Portions created by the Initial Developer are Copyright (C) 2008-2025
 	the Initial Developer. All Rights Reserved.
 
 	Contributor(s):
@@ -39,6 +39,9 @@
 	$language = new text;
 	$text = $language->get();
 
+//connect to the database
+	$database = database::new();
+
 //get the uuid from http values
 	$clip_uuid = $_GET["id"];
 
@@ -49,9 +52,6 @@
 		$p = permissions::new();
 		$p->add('clip_delete', 'temp');
 
-		$database = new database;
-		$database->app_name = 'edit';
-		$database->app_uuid = '17e628ee-ccfa-49c0-29ca-9894a0384b9b';
 		$database->delete($array);
 		unset($array);
 

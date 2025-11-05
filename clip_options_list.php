@@ -17,7 +17,7 @@
 
 	The Initial Developer of the Original Code is
 	Mark J Crane <markjcrane@fusionpbx.com>
-	Portions created by the Initial Developer are Copyright (C) 2008-2023
+	Portions created by the Initial Developer are Copyright (C) 2008-2025
 	the Initial Developer. All Rights Reserved.
 
 	Contributor(s):
@@ -38,6 +38,9 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+
+//connect to the database
+	$database = database::new();
 
 //include
 	require_once "header.php";
@@ -120,7 +123,6 @@
 	echo "<div style='text-align: left;'>\n";
 
 	$sql = "select * from v_clips order by clip_folder asc, clip_name asc";
-	$database = new database;
 	$result = $database->select($sql, null, 'all');
 	unset($sql);
 
@@ -167,7 +169,7 @@
 						echo "<textarea style='display: none' id='after_".$row['uuid']."'>".$row['after']."</textarea>\n";
 						echo "</div>\n";
 					}
-					
+
 					echo "</div>\n";
 				}
 			}
