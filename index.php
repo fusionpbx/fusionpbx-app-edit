@@ -202,185 +202,185 @@ if (empty($settings) || !($settings instanceof settings)) {
 	</style>
 </head>
 <body style="padding: 0; margin: 0; overflow: hidden;">
-  <div id="frame" style="display: flex; height: 100vh; width: 100vw;">
-    <!-- Sidebar -->
-    <div id="sidebar" style="width: 300px; height: 100%; display: flex; flex-direction: column;">
+	<div id="frame" style="display: flex; height: 100vh; width: 100vw;">
+	<!-- Sidebar -->
+	<div id="sidebar" style="width: 300px; height: 100%; display: flex; flex-direction: column;">
 		<div id="file_list" style="border: none; height: 65%; width: 100%; overflow: auto;">
 			Loading...
 		</div>
 		<div id="clip_list" style="border: none; border-top: 1px solid #ccc; height: calc(35% - 1px); width: 100%; overflow: auto;">
 			Loading...
 		</div>
-    </div>
+	</div>
 
-    <!-- Main Content -->
-    <div id="ace_content" style="flex: 1; height: 100%; display: flex; flex-direction: column;">
-      <!-- Editor Controls -->
-      <form style="margin: 0;" name="frm_edit" id="frm_edit" method="post" action="file_save.php" onsubmit="return submit_check();">
-        <textarea name="content" id="editor_source" style="display: none;"></textarea>
-        <input type="hidden" name="filepath" id="filepath" value="">
-        <input type="hidden" name="token" id="token" value="<?php echo $_SESSION['token']; ?>">
-        <div id="editor-controls" style="display: flex; align-items: center; width: 100%; height: 30px;">
-          <div id="td_save" style="display: inline-flex; align-items: center;">
-            <i class="fas fa-save fa-lg ace_control" title="<?php echo $text['label-save_changes']; ?>" onclick="save();"></i>
-          </div>
-          <div style="flex: 1; padding: 0 15px 0 18px;">
-            <input id="current_file" type="text" style="height: 23px; width: 100%;">
-          </div>
-          <div style="width: 1px; height: 40px;"></div>
-          <div style="padding-left: 6px;">
-            <i class="fas fa-window-maximize fa-lg fa-rotate-270 ace_control" title="<?php echo $text['label-toggle_side_bar']; ?>" onclick="toggle_sidebar();"></i>
-          </div>
-          <div style="padding-left: 6px;">
-            <i class="fas fa-list-ul fa-lg ace_control" title="<?php echo $text['label-toggle_line_numbers']; ?>" onclick="toggle_option('numbering');"></i>
-          </div>
-          <div style="padding-left: 6px;">
-            <i class="fas fa-eye-slash fa-lg ace_control" title="<?php echo $text['label-toggle_invisibles']; ?>" onclick="toggle_option('invisibles');"></i>
-          </div>
-          <div style="padding-left: 6px;">
-            <i class="fas fa-indent fa-lg ace_control" title="<?php echo $text['label-toggle_indent_guides']; ?>" onclick="toggle_option('indenting');"></i>
-          </div>
-          <div style="padding-left: 6px;">
-            <i class="fas fa-search fa-lg ace_control" title="<?php echo $text['label-find_replace']; ?>" onclick="editor.execCommand('replace');"></i>
-          </div>
-          <div style="padding-left: 6px;">
-            <i class="fas fa-chevron-down fa-lg ace_control" title="<?php echo $text['label-go_to_line']; ?>" onclick="editor.execCommand('gotoline');"></i>
-          </div>
-          <div style="padding-left: 15px;">
-            <select id="mode" style="height: 23px; max-width: 70px;" onchange="editor.getSession().setMode('ace/mode/' + this.options[this.selectedIndex].value); focus_editor();">
-              <?php
-              $modes['php'] = 'PHP';
-              $modes['css'] = 'CSS';
-              $modes['html'] = 'HTML';
-              $modes['javascript'] = 'JS';
-              $modes['json'] = 'JSON';
-              $modes['ini'] = 'Conf';
-              $modes['lua'] = 'Lua';
-              $modes['text'] = 'Text';
-              $modes['xml'] = 'XML';
-              $modes['sql'] = 'SQL';
-              $modes['sh'] = 'SH';
-              $modes['smarty'] = 'Smarty';
-              $modes['svg'] = 'SVG';
-              $modes['makefile'] = 'Makefile';
-              $modes['c_cpp'] = 'C';
-              $modes['c_cpp'] = 'CPP';
-              $modes['pgsql'] = 'PGSQL';
-              foreach ($modes as $value => $label) {
-                  $selected = ($value == $mode) ? 'selected' : null;
-                  echo "<option value='".$value."' ".$selected.">".$label."</option>\n";
-              }
-              ?>
-            </select>
-          </div>
-          <div style="padding-left: 4px;">
-            <select id="size" style="height: 23px;" onchange="document.getElementById('editor').style.fontSize = this.options[this.selectedIndex].value; focus_editor();">
-              <?php
-              $sizes = explode(',','9px,10px,11px,12px,14px,16px,18px,20px');
-              if (!in_array($setting_size, $sizes)) {
-                  echo "<option value='".$setting_size."'>".$setting_size."</option>\n";
-                  echo "<option value='' disabled='disabled'></option>\n";
-              }
-              foreach ($sizes as $size) {
-                  $selected = ($size == $setting_size) ? 'selected' : null;
-                  echo "<option value='".$size."' ".$selected.">".$size."</option>\n";
-              }
-              ?>
-            </select>
-          </div>
-          <div style="padding-left: 4px; padding-right: 4px;">
-            <select id="theme" style="height: 23px; max-width: 100px;" onchange="editor.setTheme('ace/theme/' + this.options[this.selectedIndex].value); focus_editor();">
-              <?php
-              $themes['Bright']['chrome']= 'Chrome';
-              $themes['Bright']['clouds']= 'Clouds';
-              $themes['Bright']['crimson_editor']= 'Crimson Editor';
-              $themes['Bright']['dawn']= 'Dawn';
-              $themes['Bright']['dreamweaver']= 'Dreamweaver';
-              $themes['Bright']['eclipse']= 'Eclipse';
-              $themes['Bright']['github']= 'GitHub';
-              $themes['Bright']['iplastic']= 'IPlastic';
-              $themes['Bright']['solarized_light']= 'Solarized Light';
-              $themes['Bright']['textmate']= 'TextMate';
-              $themes['Bright']['tomorrow']= 'Tomorrow';
-              $themes['Bright']['xcode']= 'XCode';
-              $themes['Bright']['kuroir']= 'Kuroir';
-              $themes['Bright']['katzenmilch']= 'KatzenMilch';
-              $themes['Bright']['sqlserver']= 'SQL Server';
-              $themes['Dark']['ambiance']= 'Ambiance';
-              $themes['Dark']['chaos']= 'Chaos';
-              $themes['Dark']['clouds_midnight']= 'Clouds Midnight';
-              $themes['Dark']['cobalt']= 'Cobalt';
-              $themes['Dark']['idle_fingers']= 'idle Fingers';
-              $themes['Dark']['kr_theme']= 'krTheme';
-              $themes['Dark']['merbivore']= 'Merbivore';
-              $themes['Dark']['merbivore_soft']= 'Merbivore Soft';
-              $themes['Dark']['mono_industrial']= 'Mono Industrial';
-              $themes['Dark']['monokai']= 'Monokai';
-              $themes['Dark']['pastel_on_dark']= 'Pastel on dark';
-              $themes['Dark']['solarized_dark']= 'Solarized Dark';
-              $themes['Dark']['terminal']= 'Terminal';
-              $themes['Dark']['tomorrow_night']= 'Tomorrow Night';
-              $themes['Dark']['tomorrow_night_blue']= 'Tomorrow Night Blue';
-              $themes['Dark']['tomorrow_night_bright']= 'Tomorrow Night Bright';
-              $themes['Dark']['tomorrow_night_eighties']= 'Tomorrow Night 80s';
-              $themes['Dark']['twilight']= 'Twilight';
-              $themes['Dark']['vibrant_ink']= 'Vibrant Ink';
-              foreach ($themes as $optgroup => $theme) {
-                  echo "<optgroup label='".$optgroup."'>\n";
-                  foreach ($theme as $value => $label) {
-                      $selected = (strtolower($label) == strtolower($setting_theme)) ? 'selected' : null;
-                      echo "<option value='".$value."' ".$selected.">".$label."</option>\n";
-                  }
-                  echo "</optgroup>\n";
-              }
-              ?>
-            </select>
-          </div>
-        </div>
-      </form>
-      <!-- Editor -->
-	  	<div id="editor" style="text-align: left; width: 100%; height: calc(100% - 30px); font-size: 12px;"></div>
-	  </div>
-    </div>
+	<!-- Main Content -->
+	<div id="ace_content" style="flex: 1; height: 100%; display: flex; flex-direction: column;">
+		<!-- Editor Controls -->
+		<form style="margin: 0;" name="frm_edit" id="frm_edit" method="post" action="file_save.php" onsubmit="return submit_check();">
+		<textarea name="content" id="editor_source" style="display: none;"></textarea>
+		<input type="hidden" name="filepath" id="filepath" value="">
+		<input type="hidden" name="token" id="token" value="<?php echo $_SESSION['token']; ?>">
+		<div id="editor-controls" style="display: flex; align-items: center; width: 100%; height: 30px;">
+			<div id="td_save" style="display: inline-flex; align-items: center;">
+			<i class="fas fa-save fa-lg ace_control" title="<?php echo $text['label-save_changes']; ?>" onclick="save();"></i>
+			</div>
+			<div style="flex: 1; padding: 0 15px 0 18px;">
+			<input id="current_file" type="text" style="height: 23px; width: 100%;">
+			</div>
+			<div style="width: 1px; height: 40px;"></div>
+			<div style="padding-left: 6px;">
+			<i class="fas fa-window-maximize fa-lg fa-rotate-270 ace_control" title="<?php echo $text['label-toggle_side_bar']; ?>" onclick="toggle_sidebar();"></i>
+			</div>
+			<div style="padding-left: 6px;">
+			<i class="fas fa-list-ul fa-lg ace_control" title="<?php echo $text['label-toggle_line_numbers']; ?>" onclick="toggle_option('numbering');"></i>
+			</div>
+			<div style="padding-left: 6px;">
+			<i class="fas fa-eye-slash fa-lg ace_control" title="<?php echo $text['label-toggle_invisibles']; ?>" onclick="toggle_option('invisibles');"></i>
+			</div>
+			<div style="padding-left: 6px;">
+			<i class="fas fa-indent fa-lg ace_control" title="<?php echo $text['label-toggle_indent_guides']; ?>" onclick="toggle_option('indenting');"></i>
+			</div>
+			<div style="padding-left: 6px;">
+			<i class="fas fa-search fa-lg ace_control" title="<?php echo $text['label-find_replace']; ?>" onclick="editor.execCommand('replace');"></i>
+			</div>
+			<div style="padding-left: 6px;">
+			<i class="fas fa-chevron-down fa-lg ace_control" title="<?php echo $text['label-go_to_line']; ?>" onclick="editor.execCommand('gotoline');"></i>
+			</div>
+			<div style="padding-left: 15px;">
+			<select id="mode" style="height: 23px; max-width: 70px;" onchange="editor.getSession().setMode('ace/mode/' + this.options[this.selectedIndex].value); focus_editor();">
+				<?php
+				$modes['php'] = 'PHP';
+				$modes['css'] = 'CSS';
+				$modes['html'] = 'HTML';
+				$modes['javascript'] = 'JS';
+				$modes['json'] = 'JSON';
+				$modes['ini'] = 'Conf';
+				$modes['lua'] = 'Lua';
+				$modes['text'] = 'Text';
+				$modes['xml'] = 'XML';
+				$modes['sql'] = 'SQL';
+				$modes['sh'] = 'SH';
+				$modes['smarty'] = 'Smarty';
+				$modes['svg'] = 'SVG';
+				$modes['makefile'] = 'Makefile';
+				$modes['c_cpp'] = 'C';
+				$modes['c_cpp'] = 'CPP';
+				$modes['pgsql'] = 'PGSQL';
+				foreach ($modes as $value => $label) {
+					$selected = ($value == $mode) ? 'selected' : null;
+					echo "<option value='".$value."' ".$selected.">".$label."</option>\n";
+				}
+				?>
+			</select>
+			</div>
+			<div style="padding-left: 4px;">
+			<select id="size" style="height: 23px;" onchange="document.getElementById('editor').style.fontSize = this.options[this.selectedIndex].value; focus_editor();">
+				<?php
+				$sizes = explode(',','9px,10px,11px,12px,14px,16px,18px,20px');
+				if (!in_array($setting_size, $sizes)) {
+					echo "<option value='".$setting_size."'>".$setting_size."</option>\n";
+					echo "<option value='' disabled='disabled'></option>\n";
+				}
+				foreach ($sizes as $size) {
+					$selected = ($size == $setting_size) ? 'selected' : null;
+					echo "<option value='".$size."' ".$selected.">".$size."</option>\n";
+				}
+				?>
+			</select>
+			</div>
+			<div style="padding-left: 4px; padding-right: 4px;">
+			<select id="theme" style="height: 23px; max-width: 100px;" onchange="editor.setTheme('ace/theme/' + this.options[this.selectedIndex].value); focus_editor();">
+				<?php
+				$themes['Bright']['chrome']= 'Chrome';
+				$themes['Bright']['clouds']= 'Clouds';
+				$themes['Bright']['crimson_editor']= 'Crimson Editor';
+				$themes['Bright']['dawn']= 'Dawn';
+				$themes['Bright']['dreamweaver']= 'Dreamweaver';
+				$themes['Bright']['eclipse']= 'Eclipse';
+				$themes['Bright']['github']= 'GitHub';
+				$themes['Bright']['iplastic']= 'IPlastic';
+				$themes['Bright']['solarized_light']= 'Solarized Light';
+				$themes['Bright']['textmate']= 'TextMate';
+				$themes['Bright']['tomorrow']= 'Tomorrow';
+				$themes['Bright']['xcode']= 'XCode';
+				$themes['Bright']['kuroir']= 'Kuroir';
+				$themes['Bright']['katzenmilch']= 'KatzenMilch';
+				$themes['Bright']['sqlserver']= 'SQL Server';
+				$themes['Dark']['ambiance']= 'Ambiance';
+				$themes['Dark']['chaos']= 'Chaos';
+				$themes['Dark']['clouds_midnight']= 'Clouds Midnight';
+				$themes['Dark']['cobalt']= 'Cobalt';
+				$themes['Dark']['idle_fingers']= 'idle Fingers';
+				$themes['Dark']['kr_theme']= 'krTheme';
+				$themes['Dark']['merbivore']= 'Merbivore';
+				$themes['Dark']['merbivore_soft']= 'Merbivore Soft';
+				$themes['Dark']['mono_industrial']= 'Mono Industrial';
+				$themes['Dark']['monokai']= 'Monokai';
+				$themes['Dark']['pastel_on_dark']= 'Pastel on dark';
+				$themes['Dark']['solarized_dark']= 'Solarized Dark';
+				$themes['Dark']['terminal']= 'Terminal';
+				$themes['Dark']['tomorrow_night']= 'Tomorrow Night';
+				$themes['Dark']['tomorrow_night_blue']= 'Tomorrow Night Blue';
+				$themes['Dark']['tomorrow_night_bright']= 'Tomorrow Night Bright';
+				$themes['Dark']['tomorrow_night_eighties']= 'Tomorrow Night 80s';
+				$themes['Dark']['twilight']= 'Twilight';
+				$themes['Dark']['vibrant_ink']= 'Vibrant Ink';
+				foreach ($themes as $optgroup => $theme) {
+					echo "<optgroup label='".$optgroup."'>\n";
+					foreach ($theme as $value => $label) {
+						$selected = (strtolower($label) == strtolower($setting_theme)) ? 'selected' : null;
+						echo "<option value='".$value."' ".$selected.">".$label."</option>\n";
+					}
+					echo "</optgroup>\n";
+				}
+				?>
+			</select>
+			</div>
+		</div>
+		</form>
+		<!-- Editor -->
+			<div id="editor" style="text-align: left; width: 100%; height: calc(100% - 30px); font-size: 12px;"></div>
+		</div>
+	</div>
 
-  <script src="<?php echo PROJECT_PATH; ?>/resources/ace/ace.js" charset="utf-8"></script>
-  <script src="<?php echo PROJECT_PATH; ?>/resources/ace/ext-inline_autocomplete.js"></script>
-  <script>
-    // Load ACE extensions
-    ace.require("ace/ext/language_tools");
+	<script src="<?php echo PROJECT_PATH; ?>/resources/ace/ace.js" charset="utf-8"></script>
+	<script src="<?php echo PROJECT_PATH; ?>/resources/ace/ext-inline_autocomplete.js"></script>
+	<script>
+	// Load ACE extensions
+	ace.require("ace/ext/language_tools");
 
-    // Initialize ACE Editor
-    var editor = ace.edit("editor");
-    editor.setOptions({
-      mode: 'ace/mode/<?=$mode?>',
-      theme: 'ace/theme/'+document.getElementById('theme').options[document.getElementById('theme').selectedIndex].value,
-      selectionStyle: 'text',
-      cursorStyle: 'smooth',
-      showInvisibles: <?=$setting_invisibles ? 'true' : 'false'?>,
-      displayIndentGuides: <?=$setting_indenting ? 'true' : 'false'?>,
-      showLineNumbers: <?=$setting_numbering ? 'true' : 'false'?>,
-      showGutter: true,
-      scrollPastEnd: true,
-      fadeFoldWidgets: <?=$setting_numbering ? 'true' : 'false'?>,
-      showPrintMargin: false,
-      highlightGutterLine: false,
-      useSoftTabs: false,
-      enableBasicAutocompletion: true,
-	  enableLiveAutocompletion: <?php echo ($mode === 'php') ? 'true' : 'false'; ?>,
-      enableSnippets: <?php echo 'true' ?>
-    });
+	// Initialize ACE Editor
+	var editor = ace.edit("editor");
+	editor.setOptions({
+		mode: 'ace/mode/<?=$mode?>',
+		theme: 'ace/theme/'+document.getElementById('theme').options[document.getElementById('theme').selectedIndex].value,
+		selectionStyle: 'text',
+		cursorStyle: 'smooth',
+		showInvisibles: <?=$setting_invisibles ? 'true' : 'false'?>,
+		displayIndentGuides: <?=$setting_indenting ? 'true' : 'false'?>,
+		showLineNumbers: <?=$setting_numbering ? 'true' : 'false'?>,
+		showGutter: true,
+		scrollPastEnd: true,
+		fadeFoldWidgets: <?=$setting_numbering ? 'true' : 'false'?>,
+		showPrintMargin: false,
+		highlightGutterLine: false,
+		useSoftTabs: false,
+		enableBasicAutocompletion: true,
+		enableLiveAutocompletion: <?php echo ($mode === 'php') ? 'true' : 'false'; ?>,
+		enableSnippets: <?php echo 'true' ?>
+	});
 
-    // Prevent form submission with Enter key
-    <?php key_press('enter', 'down', '#current_file', null, null, 'return false;', false); ?>
+	// Prevent form submission with Enter key
+	<?php key_press('enter', 'down', '#current_file', null, null, 'return false;', false); ?>
 
-    // Save file with Ctrl+S
-    <?php key_press('ctrl+s', 'down', 'window', null, null, "save(); return false;", false); ?>
+	// Save file with Ctrl+S
+	<?php key_press('ctrl+s', 'down', 'window', null, null, "save(); return false;", false); ?>
 
-    // Open file manager/clip library pane with Ctrl+Q
-    <?php key_press('ctrl+q', 'down', 'window', null, null, 'toggle_sidebar(); focus_editor(); return false;', false); ?>
+	// Open file manager/clip library pane with Ctrl+Q
+	<?php key_press('ctrl+q', 'down', 'window', null, null, 'toggle_sidebar(); focus_editor(); return false;', false); ?>
 
-    // Remove unwanted shortcuts
-    editor.commands.bindKey("Ctrl-T", null); // Disable new browser tab shortcut
+	// Remove unwanted shortcuts
+	editor.commands.bindKey("Ctrl-T", null); // Disable new browser tab shortcut
 
 	// Levenshtein distance algorithm
 	function levenshteinDistance(a, b) {
@@ -553,62 +553,62 @@ if (empty($settings) || !($settings instanceof settings)) {
 	}
 
 	function makeRequest(url, strpost) {
-        var http_request = false;
+		var http_request = false;
 
-        if (window.XMLHttpRequest) { // Mozilla, Safari, ...
-            http_request = new XMLHttpRequest();
-            if (http_request.overrideMimeType) {
-                http_request.overrideMimeType('text/xml');
-                // See note below about this line
-            }
-        } else if (window.ActiveXObject) { // IE
-            try {
-                http_request = new ActiveXObject("Msxml2.XMLHTTP");
-            } catch (e) {
-                try {
-                    http_request = new ActiveXObject("Microsoft.XMLHTTP");
-                } catch (e) {}
-            }
-        }
+		if (window.XMLHttpRequest) { // Mozilla, Safari, ...
+			http_request = new XMLHttpRequest();
+			if (http_request.overrideMimeType) {
+				http_request.overrideMimeType('text/xml');
+				// See note below about this line
+			}
+		} else if (window.ActiveXObject) { // IE
+			try {
+				http_request = new ActiveXObject("Msxml2.XMLHTTP");
+			} catch (e) {
+				try {
+					http_request = new ActiveXObject("Microsoft.XMLHTTP");
+				} catch (e) {}
+			}
+		}
 
-        if (!http_request) {
-            alert('<?=$text['message-give-up']?>');
-            return false;
-        }
-        http_request.onreadystatechange = function() { returnContent(http_request); };
-        if (http_request.overrideMimeType) {
-              http_request.overrideMimeType('text/html');
-        }
-        http_request.open('POST', url, true);
+		if (!http_request) {
+			alert('<?=$text['message-give-up']?>');
+			return false;
+		}
+		http_request.onreadystatechange = function() { returnContent(http_request); };
+		if (http_request.overrideMimeType) {
+			http_request.overrideMimeType('text/html');
+		}
+		http_request.open('POST', url, true);
 
 
-        if (strpost.length == 0) {
-            //http_request.send(null);
-            http_request.send('name=value&foo=bar');
-        }
-        else {
-            http_request.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
-            http_request.send(strpost);
-        }
+		if (strpost.length == 0) {
+			//http_request.send(null);
+			http_request.send('name=value&foo=bar');
+		}
+		else {
+			http_request.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
+			http_request.send(strpost);
+		}
 
-    }
+	}
 
-    function returnContent(http_request) {
+	function returnContent(http_request) {
 
-        if (http_request.readyState === 4) {
-            if (http_request.status === 200) {
+		if (http_request.readyState === 4) {
+			if (http_request.status === 200) {
 				document.getElementById('editor_source').value=http_request.responseText;
 				editor.getSession().setValue(document.getElementById('editor_source').value);
 				editor.gotoLine(1);
 				editor.scrollToLine(1, true, true, function() {});
 				editor.focus();
-            }
-            else {
-                alert('<?=$text['message-problem']?>');
-            }
-        }
+			}
+			else {
+				alert('<?=$text['message-problem']?>');
+			}
+		}
 
-    }
+	}
 	// ---------------------------------------------
 	// --- http://www.codeproject.com/jscript/dhtml_treeview.asp
 	// --- Name:    Easy DHTML Treeview           --
