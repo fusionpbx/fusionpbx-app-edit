@@ -105,36 +105,36 @@
 	}
 
 //set the directory title and mode
-        switch ($_REQUEST["dir"]) {
-                case 'xml':
-                        $title = 'XML';
-                        $mode = 'xml';
-                        $dir = 'xml';
-                        break;
-                case 'provision':
-                        $title = 'Provision';
-                        $mode = 'xml';
-                        $dir = 'provision';
-                        break;
-                case 'php':
-                        $title = 'PHP';
-                        $mode = 'php';
-                        $dir = 'php';
-                        break;
-                case 'scripts':
-                        $title = 'Scripts';
-                        $mode = 'lua';
-                        $dir = 'scripts';
-                        break;
-                case 'grammar':
-                        $title = 'Grammar';
-                        $mode = 'xml';
-                        $dir = 'grammar';
-                        break;
-                default:
-                        $mode = 'text;
-                        $dir = '';
-        }
+	switch ($_REQUEST["dir"]) {
+		case 'xml':
+			$title = 'XML';
+			$mode = 'xml';
+			$dir = 'xml';
+			break;
+		case 'provision':
+			$title = 'Provision';
+			$mode = 'xml';
+			$dir = 'provision';
+			break;
+		case 'php':
+			$title = 'PHP';
+			$mode = 'php';
+			$dir = 'php';
+			break;
+		case 'scripts':
+			$title = 'Scripts';
+			$mode = 'lua';
+			$dir = 'scripts';
+			break;
+		case 'grammar':
+			$title = 'Grammar';
+			$mode = 'xml';
+			$dir = 'grammar';
+			break;
+		default:
+			$mode = 'text';
+			$dir = '';
+	}
 
 
 //get the directory
