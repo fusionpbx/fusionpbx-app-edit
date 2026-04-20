@@ -25,26 +25,26 @@
 	James Rose <james.o.rose@gmail.com>
 */
 
-//includes files
+// Includes files
 	require_once dirname(__DIR__, 2) . "/resources/require.php";
 	require_once "resources/check_auth.php";
 
-//check permissions
+// Check permissions
 	if (!permission_exists('edit_view')) {
 		echo "access denied";
 		exit;
 	}
 
-//add multi-lingual support
+// Add multi-lingual support
 	$language = new text;
 	$text = $language->get();
 
-//create the settings object
+// Create the settings object
 	if (!$settings) {
 		$settings = new settings();
 	}
 
-//set the directory title and mode
+// Set the directory title and mode
 	switch ($_GET["dir"]) {
 		case 'xml':
 			$title = 'XML';
@@ -76,32 +76,29 @@
 			$dir = '';
 	}
 
-//save the sanitized value
-	$_SESSION['app']['edit']['dir'] = $dir;
-
-//ensure we have a settings object for older installs
+// Ensure we have a settings object for older installs
 if (empty($settings) || !($settings instanceof settings)) {
 	$settings = new settings(['database' => database::new(), 'domain_uuid' => $domain_uuid ?? $_SESSION['domain_uuid'] ?? '', 'user_uuid' => $user_uuid ?? $_SESSION['user_uuid'] ?? '']);
 }
 
-//load editor preferences/defaults
-	$setting_size = $settings->get('editor', 'font_size', '12px');
-	$setting_theme = $settings->get('editor', 'theme', 'cobalt');
-	$setting_invisibles = $settings->get('editor', 'invisibles',false);
-	$setting_indenting = $settings->get('editor', 'indent_guides',false);
-	$setting_numbering = $settings->get('editor', 'line_numbers',true);
+// Load editor preferences/defaults
+$setting_size = $settings->get('editor', 'font_size', '12px');
+$setting_theme = $settings->get('editor', 'theme', 'cobalt');
+$setting_invisibles = $settings->get('editor', 'invisibles',false);
+$setting_indenting = $settings->get('editor', 'indent_guides',false);
+$setting_numbering = $settings->get('editor', 'line_numbers',true);
 
-//get and then set the favicon
-	$favicon = $settings->get('theme', 'favicon', PROJECT_ROOT .'/themes/default/favicon.ico');
+// Get and then set the favicon
+$favicon = $settings->get('theme', 'favicon', PROJECT_ROOT .'/themes/default/favicon.ico');
 
-//create a token
-	$key_name = '/app/edit/'.$mode;
-	$_SESSION['keys'][$key_name] = bin2hex(random_bytes(32));
-	$_SESSION['token'] = hash_hmac('sha256', $key_name, $_SESSION['keys'][$key_name]);
+// Create a token
+$key_name = '/app/edit/'.$mode;
+$_SESSION['keys'][$key_name] = bin2hex(random_bytes(32));
+$_SESSION['token'] = hash_hmac('sha256', $key_name, $_SESSION['keys'][$key_name]);
 
-	//The buffer must be empty
-	while(ob_get_level() > 0)
-		ob_get_clean();
+// The buffer must be empty
+while(ob_get_level() > 0)
+	ob_get_clean();
 
 ?><!doctype html>
 <html>
@@ -346,6 +343,7 @@ if (empty($settings) || !($settings instanceof settings)) {
 	<script src="<?php echo PROJECT_PATH; ?>/resources/ace/ace.js" charset="utf-8"></script>
 	<script src="<?php echo PROJECT_PATH; ?>/resources/ace/ext-inline_autocomplete.js"></script>
 	<script>
+
 	// Load ACE extensions
 	ace.require("ace/ext/language_tools");
 
@@ -541,14 +539,23 @@ if (empty($settings) || !($settings instanceof settings)) {
 
 	async function loadFileList() {
 		try {
-			const response = await fetch('file_list.php');
+			const params = new URLSearchParams();
+			params.append('dir', '<?php echo $dir; ?>');
+
+			const response = await fetch(`file_list.php?${params.toString()}`, {
+				method: 'GET',
+				credentials: 'same-origin'
+			});
+
 			if (!response.ok) {
 				throw new Error('Network response not okay');
 			}
 			const html = await response.text();
 			document.getElementById('file_list').innerHTML = html;
+
 		} catch (error) {
-			console.error('Error fetching files:', error);
+			console.error('Error:', error);
+			document.getElementById('file_list').innerHTML = '<p>Error loading files</p>';
 		}
 	}
 
@@ -626,7 +633,7 @@ if (empty($settings) || !($settings instanceof settings)) {
 		}
 	}
 
-// Load files from server
+	// Load files from server
 	loadFileList();
 
 </script>

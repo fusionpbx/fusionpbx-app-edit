@@ -104,9 +104,41 @@
 		return $html_dir_list ."\n". $html_file_list;
 	}
 
+//set the directory title and mode
+        switch ($_REQUEST["dir"]) {
+                case 'xml':
+                        $title = 'XML';
+                        $mode = 'xml';
+                        $dir = 'xml';
+                        break;
+                case 'provision':
+                        $title = 'Provision';
+                        $mode = 'xml';
+                        $dir = 'provision';
+                        break;
+                case 'php':
+                        $title = 'PHP';
+                        $mode = 'php';
+                        $dir = 'php';
+                        break;
+                case 'scripts':
+                        $title = 'Scripts';
+                        $mode = 'lua';
+                        $dir = 'scripts';
+                        break;
+                case 'grammar':
+                        $title = 'Grammar';
+                        $mode = 'xml';
+                        $dir = 'grammar';
+                        break;
+                default:
+                        $mode = 'text;
+                        $dir = '';
+        }
+
+
 //get the directory
-	if (!isset($_SESSION)) { session_start(); }
-	switch ($_SESSION["app"]["edit"]["dir"]) {
+	switch ($dir) {
 		case 'scripts':
 			$edit_directory = $settings->get('switch', 'scripts');
 			break;
