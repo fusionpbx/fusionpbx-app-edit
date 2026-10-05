@@ -135,25 +135,31 @@ while(ob_get_level() > 0)
 		function toggle_search_panel() {
 			var panel = document.getElementById('search_panel');
 			if (panel.style.display == 'none' || panel.style.display == '') {
-				panel.style.display = 'block';
+				panel.style.display = 'flex';
 				document.getElementById('search_term').focus();
+				if (window.editor && editor.resize) { editor.resize(); }
 			}
 			else {
 				panel.style.display = 'none';
+				if (window.editor && editor.resize) { editor.resize(); }
 				focus_editor();
 			}
 		}
 
 		function toggle_sidebar() {
 			var td_sidebar = document.getElementById('sidebar');
+			var td_resizer = document.getElementById('col_resizer');
 			if (td_sidebar.style.display == '') {
 				document.getElementById('td_save').style.paddingLeft = '12px';
 				td_sidebar.style.display = 'none';
+				if (td_resizer) { td_resizer.style.display = 'none'; }
 			}
 			else {
 				document.getElementById('td_save').style.paddingLeft = '0';
 				td_sidebar.style.display = '';
+				if (td_resizer) { td_resizer.style.display = ''; }
 			}
+			if (window.editor && editor.resize) { editor.resize(); }
 			focus_editor();
 		}
 
@@ -331,24 +337,65 @@ while(ob_get_level() > 0)
 		i.ace_control:hover {
 			opacity: 1.0;
 			}
+
+		#col_resizer {
+			flex: 0 0 6px;
+			width: 6px;
+			cursor: col-resize;
+			background: #eaeaea;
+			}
+		#col_resizer:hover, #col_resizer:active {
+			background: #cccccc;
+			}
+		#pane_resizer {
+			flex: 0 0 6px;
+			height: 6px;
+			cursor: row-resize;
+			background: #eaeaea;
+			}
+		#pane_resizer:hover, #pane_resizer:active {
+			background: #cccccc;
+			}
+		#search_resizer {
+			flex: 0 0 6px;
+			height: 6px;
+			cursor: row-resize;
+			background: #eaeaea;
+			margin: 0 -10px;
+			}
+		#search_resizer:hover, #search_resizer:active {
+			background: #cccccc;
+			}
+		body.resizing-col {
+			cursor: col-resize;
+			user-select: none;
+			}
+		body.resizing-pane {
+			cursor: row-resize;
+			user-select: none;
+			}
 	</style>
 </head>
 <body style="padding: 0; margin: 0; overflow: hidden;">
 	<div id="frame" style="display: flex; height: 100vh; width: 100vw;">
 	<!-- Sidebar -->
-	<div id="sidebar" style="width: 300px; height: 100%; display: flex; flex-direction: column;">
-		<div id="file_list" style="border: none; height: 65%; width: 100%; overflow: auto;">
+	<div id="sidebar" style="flex: 0 0 auto; width: 300px; height: 100%; display: flex; flex-direction: column;">
+		<div id="file_list" style="flex: 0 0 auto; border: none; height: 65%; width: 100%; overflow: auto;">
 			Loading...
 		</div>
-		<div id="clip_list" style="border: none; border-top: 1px solid #ccc; height: calc(35% - 1px); width: 100%; overflow: auto;">
+		<div id="pane_resizer"></div>
+		<div id="clip_list" style="flex: 1 1 0; border: none; width: 100%; overflow: auto;">
 			Loading...
 		</div>
 	</div>
 
+	<!-- Column Resizer -->
+	<div id="col_resizer"></div>
+
 	<!-- Main Content -->
 	<div id="ace_content" style="flex: 1; height: 100%; display: flex; flex-direction: column;">
 		<!-- Editor Controls -->
-		<form style="margin: 0;" name="frm_edit" id="frm_edit" method="post" action="file_save.php" onsubmit="return submit_check();">
+		<form style="margin: 0; flex: 0 0 auto;" name="frm_edit" id="frm_edit" method="post" action="file_save.php" onsubmit="return submit_check();">
 		<textarea name="content" id="editor_source" style="display: none;"></textarea>
 		<input type="hidden" name="filepath" id="filepath" value="">
 		<input type="hidden" name="token" id="token" value="<?php echo $_SESSION['token']; ?>">
@@ -474,7 +521,7 @@ while(ob_get_level() > 0)
 		</div>
 		</form>
 		<!-- Search / Replace Panel -->
-		<div id="search_panel" style="display: none; border-top: 1px solid #ccc; background: #f5f5f5; padding: 6px 10px;">
+		<div id="search_panel" style="display: none; flex: 0 0 auto; flex-direction: column; height: 240px; border-top: 1px solid #ccc; background: #f5f5f5; padding: 6px 10px;">
 			<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
 				<input type="text" id="search_term" placeholder="<?php echo $text['label-search']; ?>" style="height: 22px; width: 220px;" onkeydown="if (event.key == 'Enter') { search_files(); return false; }">
 				<input type="text" id="replace_term" placeholder="<?php echo $text['label-replace']; ?>" style="height: 22px; width: 220px;">
@@ -483,10 +530,11 @@ while(ob_get_level() > 0)
 				<button type="button" class="btn" style="height: 24px;" onclick="search_files();"><?php echo $text['label-search_files']; ?></button>
 				<button type="button" class="btn" style="height: 24px;" onclick="replace_in_file();"><?php echo $text['label-replace_in_file']; ?></button>
 			</div>
-			<div id="search_results" style="max-height: 180px; overflow: auto; margin-top: 6px; background: #fff; border: 1px solid #ddd;"></div>
+			<div id="search_results" style="flex: 1 1 0; min-height: 0; overflow: auto; margin-top: 6px; background: #fff; border: 1px solid #ddd;"></div>
+			<div id="search_resizer"></div>
 		</div>
 		<!-- Editor -->
-			<div id="editor" style="text-align: left; width: 100%; height: calc(100% - 30px); font-size: 12px;"></div>
+			<div id="editor" style="text-align: left; width: 100%; flex: 1 1 0; min-height: 0; font-size: 12px;"></div>
 		</div>
 	</div>
 
@@ -673,6 +721,91 @@ while(ob_get_level() > 0)
 		// Run auto-completion setup
 		init_ace_completion();
 	}
+</script>
+
+<script>
+	// Resizable panes/columns: click and drag the thin grip handles
+	(function() {
+		'use strict';
+
+		function attachResizer(handle, dragClass, onMove, onEnd) {
+			if (!handle) { return; }
+			handle.addEventListener('pointerdown', function(e) {
+				if (e.pointerType === 'mouse' && e.button !== 0) { return; }
+				e.preventDefault();
+				if (handle.setPointerCapture) { handle.setPointerCapture(e.pointerId); }
+				document.body.classList.add(dragClass);
+				function moveHandler(ev) { onMove(ev); }
+				function upHandler(ev) {
+					document.body.classList.remove(dragClass);
+					if (handle.releasePointerCapture) { try { handle.releasePointerCapture(ev.pointerId); } catch (err) {} }
+					handle.removeEventListener('pointermove', moveHandler);
+					handle.removeEventListener('pointerup', upHandler);
+					handle.removeEventListener('pointercancel', upHandler);
+					if (onEnd) { onEnd(ev); }
+				}
+				handle.addEventListener('pointermove', moveHandler);
+				handle.addEventListener('pointerup', upHandler);
+				handle.addEventListener('pointercancel', upHandler);
+			});
+		}
+
+		// Feature 1: resize the columns (sidebar width) with the vertical grip
+		attachResizer(document.getElementById('col_resizer'), 'resizing-col',
+			function(e) {
+				var frame = document.getElementById('frame');
+				var sidebar = document.getElementById('sidebar');
+				if (!frame || !sidebar) { return; }
+				var r = frame.getBoundingClientRect();
+				var w = e.clientX - r.left;
+				if (w < 150) { w = 150; }
+				var maxW = Math.round(r.width * 0.6);
+				if (w > maxW) { w = maxW; }
+				sidebar.style.width = w + 'px';
+				if (window.editor && editor.resize) { editor.resize(); }
+			},
+			function() { if (window.editor && editor.resize) { editor.resize(); } }
+		);
+
+		// Feature 2: resize the Files / Clip Library panes with the horizontal grip
+		attachResizer(document.getElementById('pane_resizer'), 'resizing-pane',
+			function(e) {
+				var sidebar = document.getElementById('sidebar');
+				var fileList = document.getElementById('file_list');
+				if (!sidebar || !fileList) { return; }
+				var r = sidebar.getBoundingClientRect();
+				if (r.height <= 0) { return; }
+				var frac = (e.clientY - r.top) / r.height;
+				if (frac < 0.08) { frac = 0.08; }
+				if (frac > 0.92) { frac = 0.92; }
+				fileList.style.height = (frac * 100) + '%';
+			}
+		);
+
+		// Feature 3: resize the search/replace panel height with its bottom grip
+		attachResizer(document.getElementById('search_resizer'), 'resizing-pane',
+			function(e) {
+				var panel = document.getElementById('search_panel');
+				if (!panel) { return; }
+				var pr = panel.getBoundingClientRect();
+				var h = e.clientY - pr.top;
+				var minH = 60;
+				var content = document.getElementById('ace_content');
+				var cr = content.getBoundingClientRect();
+				var maxH = Math.max(minH, Math.round(cr.height * 0.8));
+				if (h < minH) { h = minH; }
+				if (h > maxH) { h = maxH; }
+				panel.style.height = h + 'px';
+				if (window.editor && editor.resize) { editor.resize(); }
+			},
+			function() { if (window.editor && editor.resize) { editor.resize(); } }
+		);
+
+		// Keep the ACE editor sized to its container when the window is resized
+		window.addEventListener('resize', function() {
+			if (window.editor && editor.resize) { editor.resize(); }
+		});
+	})();
 </script>
 </body>
 <script>
