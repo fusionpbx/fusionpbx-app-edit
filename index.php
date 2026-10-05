@@ -132,6 +132,18 @@ while(ob_get_level() > 0)
 			editor.setOption(opt_name, ((opt_val) ? false : true));
 		}
 
+		function toggle_search_panel() {
+			var panel = document.getElementById('search_panel');
+			if (panel.style.display == 'none' || panel.style.display == '') {
+				panel.style.display = 'block';
+				document.getElementById('search_term').focus();
+			}
+			else {
+				panel.style.display = 'none';
+				focus_editor();
+			}
+		}
+
 		function toggle_sidebar() {
 			var td_sidebar = document.getElementById('sidebar');
 			if (td_sidebar.style.display == '') {
@@ -179,6 +191,129 @@ while(ob_get_level() > 0)
 			form_data.append('mode',"<?php echo $mode; ?>");
 
 			http_request('file_save.php', form_data);
+		}
+
+		function search_options() {
+			var form_data = new FormData();
+			form_data.append('search', document.getElementById('search_term').value);
+			form_data.append('replace', document.getElementById('replace_term').value);
+			form_data.append('case_sensitive', document.getElementById('search_case').checked ? '1' : '0');
+			form_data.append('use_regex', document.getElementById('search_regex').checked ? '1' : '0');
+			form_data.append('token', document.getElementById('token').value);
+			form_data.append('mode', "<?php echo $mode; ?>");
+			form_data.append('dir', "<?php echo $dir; ?>");
+			return form_data;
+		}
+
+		function search_files() {
+			var form_data = search_options();
+			form_data.append('action', 'search');
+			var results_div = document.getElementById('search_results');
+			results_div.innerHTML = '<div style="padding: 6px 10px;">Searching...</div>';
+			var http = new XMLHttpRequest();
+			http.open('POST', 'search_replace.php', true);
+			http.onload = function(e) {
+				if (this.status == 200) {
+					var data;
+					try {
+						data = JSON.parse(this.responseText);
+					}
+					catch (err) {
+						results_div.innerHTML = '<div style="padding: 6px 10px;">Invalid response from server</div>';
+						return;
+					}
+					if (data.error) {
+						results_div.innerHTML = '<div style="padding: 6px 10px; color: #c00;">' + data.error + '</div>';
+						return;
+					}
+					var results = data.results;
+					if (results.length == 0) {
+						results_div.innerHTML = '<div style="padding: 6px 10px;">No matches found</div>';
+						return;
+					}
+					window.search_results_data = results;
+					var html = '<div style="padding: 4px 10px; font-size: 11px; color: #666;">' + results.length + ' match(es) found</div>';
+					for (var i = 0; i < results.length; i++) {
+						var r = results[i];
+						var file = r.file.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/'/g, '&#39;');
+						var context = r.context.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/'/g, '&#39;');
+						html += "<div style='white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 2px 10px; cursor: pointer;' title='" + file + ":" + r.line + "' onclick='open_search_result(" + i + ");'>"
+							+ "<img src='resources/images/icon_file.png' border='0' align='absmiddle' style='margin: 1px 2px 3px 0px;'>"
+							+ file + " <b>:" + r.line + "</b> " + context + "</div>";
+					}
+					results_div.innerHTML = html;
+				}
+				else {
+					results_div.innerHTML = '<div style="padding: 6px 10px; color: #c00;">Request failed</div>';
+				}
+			};
+			http.send(form_data);
+		}
+
+		function open_search_result(index) {
+			var r = window.search_results_data[index];
+			var file = r.file;
+			var line = r.line;
+			document.getElementById('filepath').value = file;
+			document.getElementById('current_file').value = file;
+			makeRequest('file_read.php', 'file=' + encodeURIComponent(file));
+			// jump to the line once the file has loaded
+			var attempts = 0;
+			var timer = setInterval(function() {
+				attempts++;
+				if (editor.getSession().getValue() != '') {
+					clearInterval(timer);
+					editor.gotoLine(line, 0, true, function() {});
+					editor.focus();
+				}
+				if (attempts > 100) {
+					clearInterval(timer);
+				}
+			}, 100);
+		}
+
+		function replace_in_file() {
+			var file = document.getElementById('filepath').value;
+			if (file == '') {
+				alert('Open a file first, then use replace.');
+				return;
+			}
+			var search = document.getElementById('search_term').value;
+			if (search == '') {
+				alert('Enter a search term first.');
+				return;
+			}
+			if (!confirm('Replace all occurrences in ' + file + '?')) {
+				return;
+			}
+			var form_data = search_options();
+			form_data.append('action', 'replace');
+			form_data.append('filepath', file);
+			var http = new XMLHttpRequest();
+			http.open('POST', 'search_replace.php', true);
+			http.onload = function(e) {
+				if (this.status == 200) {
+					var data;
+					try {
+						data = JSON.parse(this.responseText);
+					}
+					catch (err) {
+						alert('Invalid response from server');
+						return;
+					}
+					if (data.error) {
+						alert(data.error);
+						return;
+					}
+					alert(data.count + ' replacement(s) made');
+					// reload the file to show the changes
+					makeRequest('file_read.php', 'file=' + encodeURIComponent(file));
+				}
+				else {
+					alert('Request failed');
+				}
+			};
+			http.send(form_data);
 		}
 
 	</script>
@@ -239,6 +374,9 @@ while(ob_get_level() > 0)
 			</div>
 			<div style="padding-left: 6px;">
 			<i class="fas fa-search fa-lg ace_control" title="<?php echo $text['label-find_replace']; ?>" onclick="editor.execCommand('replace');"></i>
+			</div>
+			<div style="padding-left: 6px;">
+			<i class="fas fa-folder-open fa-lg ace_control" title="<?php echo $text['label-search_files']; ?>" onclick="toggle_search_panel();"></i>
 			</div>
 			<div style="padding-left: 6px;">
 			<i class="fas fa-chevron-down fa-lg ace_control" title="<?php echo $text['label-go_to_line']; ?>" onclick="editor.execCommand('gotoline');"></i>
@@ -335,6 +473,18 @@ while(ob_get_level() > 0)
 			</div>
 		</div>
 		</form>
+		<!-- Search / Replace Panel -->
+		<div id="search_panel" style="display: none; border-top: 1px solid #ccc; background: #f5f5f5; padding: 6px 10px;">
+			<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+				<input type="text" id="search_term" placeholder="<?php echo $text['label-search']; ?>" style="height: 22px; width: 220px;" onkeydown="if (event.key == 'Enter') { search_files(); return false; }">
+				<input type="text" id="replace_term" placeholder="<?php echo $text['label-replace']; ?>" style="height: 22px; width: 220px;">
+				<label style="font-size: 11px; white-space: nowrap;"><input type="checkbox" id="search_case"> <?php echo $text['label-case_sensitive']; ?></label>
+				<label style="font-size: 11px; white-space: nowrap;"><input type="checkbox" id="search_regex"> <?php echo $text['label-regex']; ?></label>
+				<button type="button" class="btn" style="height: 24px;" onclick="search_files();"><?php echo $text['label-search_files']; ?></button>
+				<button type="button" class="btn" style="height: 24px;" onclick="replace_in_file();"><?php echo $text['label-replace_in_file']; ?></button>
+			</div>
+			<div id="search_results" style="max-height: 180px; overflow: auto; margin-top: 6px; background: #fff; border: 1px solid #ddd;"></div>
+		</div>
 		<!-- Editor -->
 			<div id="editor" style="text-align: left; width: 100%; height: calc(100% - 30px); font-size: 12px;"></div>
 		</div>
@@ -376,6 +526,9 @@ while(ob_get_level() > 0)
 
 	// Open file manager/clip library pane with Ctrl+Q
 	<?php key_press('ctrl+q', 'down', 'window', null, null, 'toggle_sidebar(); focus_editor(); return false;', false); ?>
+
+	// Open search/replace panel with Ctrl+Shift+F
+	<?php key_press('ctrl+shift+f', 'down', 'window', null, null, 'toggle_search_panel(); return false;', false); ?>
 
 	// Remove unwanted shortcuts
 	editor.commands.bindKey("Ctrl-T", null); // Disable new browser tab shortcut
