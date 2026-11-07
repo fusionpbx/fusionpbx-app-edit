@@ -2,7 +2,14 @@
 
 $project_root = dirname(__DIR__, 3);
 
+require_once  $project_root . '/resources/require.php';
 require_once  $project_root . '/resources/classes/auto_loader.php';
+
+//check permissions
+if (!permission_exists('php_editor_view')) {
+	echo "access denied";
+	exit;
+}
 global $autoload;
 $autoload = new auto_loader();
 
